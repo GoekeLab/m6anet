@@ -10,7 +10,7 @@ from operator import itemgetter
 from collections import defaultdict
 
 from . import helper
-from ..utils import misc
+
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -237,7 +237,7 @@ def main():
     summary_filepath = args.summary
     out_dir = args.out_dir
 
-    misc.makedirs(out_dir)
+    os.makedirs(out_dir)
     
     # (1) For each read, combine multiple events aligned to the same positions, the results from nanopolish eventalign, into a single event per position.
     eventalign_log_filepath = os.path.join(out_dir,'eventalign.log')
