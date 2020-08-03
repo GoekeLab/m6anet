@@ -1,11 +1,8 @@
 certifi==2020.6.20
-mkl-fft==1.1.0
-mkl-random==1.1.1
-mkl-service==2.3.0
-numpy @ file:///tmp/build/80754af9/numpy_and_numpy_base_1596233707986/work
-pandas @ file:///tmp/build/80754af9/pandas_1592841632039/work
+numpy
+pandas
 python-dateutil==2.8.1
 pytz==2020.1
 six==1.15.0
 torch==1.6.0
-tqdm @ file:///tmp/build/80754af9/tqdm_1593446365756/work
+tqdm
