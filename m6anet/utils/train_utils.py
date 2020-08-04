@@ -283,7 +283,7 @@ def retrieve_and_save_norm_constants(input_dir, fpaths, out_dir, n_processes=1):
     pd.DataFrame(norm_const).to_csv(os.path.join(out_dir, "norm_constant.csv"), index=False)
 
     
-def prepare_data_for_training(inference_dir, save_dir, data_dir, labels,
+def prepare_data_for_training(inference_dir, save_dir, labels,
                               train_idx, test_idx, val_idx=None,
                               n_processes=1):
 
