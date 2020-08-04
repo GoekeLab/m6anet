@@ -259,7 +259,7 @@ def cross_validate(model, optimizer, data_dir, ds,
 
 
 def retrieve_and_save_norm_constants(input_dir, fpaths, out_dir, n_processes=1):
-    all_kmers = np.array([x.split("_")[4] for x in fpaths])
+    all_kmers = np.array([x.split("_")[2] for x in fpaths])
     sort_idx = np.argsort(all_kmers)
     sorted_fpaths, sorted_kmers = fpaths[sort_idx], all_kmers[sort_idx]
     kmers, indices = np.unique(sorted_kmers, return_index=True)
