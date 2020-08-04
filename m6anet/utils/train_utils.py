@@ -283,29 +283,15 @@ def retrieve_and_save_norm_constants(input_dir, fpaths, out_dir, n_processes=1):
     pd.DataFrame(norm_const).to_csv(os.path.join(out_dir, "norm_constant.csv"), index=False)
 
     
-def prepare_training_data(save_dir, data_dir):
-    return
-    # for root_dir, cell_line, train_sites, train_labels, test_sites, test_labels, val_sites, val_labels in \
-    # zip([hek293_data_dir, hct116_data_dir],
-    #     ['HEK293T', 'HCT116'],
-    #     [train_sites_hek293t, train_sites_hct116], [train_labels_hek293t, train_labels_hct116],
-    #     [test_sites_hek293t, test_sites_hct116], [test_labels_hek293t, test_labels_hct116],
-    #     [val_sites_hek293t, val_sites_hct116], [val_labels_hek293t, val_labels_hct116]):
-    
-    # save_dir_cell = os.path.join(save_dir, cell_line)
-    
-    # if not os.path.exists(save_dir_cell):
-    #     os.makedirs(save_dir_cell)
+def prepare_data_for_training(inference_dir, save_dir, data_dir, labels,
+                              train_idx, test_idx, n_processes=1):
 
-    # for mode in ('train', 'test', 'val'):
-    #     mode_dir = os.path.join(save_dir_cell, mode)
-    #     create_dir_if_not_exists(mode_dir)
-        
-    # retrieve_and_save_norm_constants(root_dir, train_sites, save_dir_cell, n_processes=n_processors)
-
-    # pd.DataFrame({'filenames': train_sites, 'modification_status': train_labels})\
-    #     .to_csv(os.path.join(save_dir_cell, "train", "data.csv.gz"), index=False)
-    # pd.DataFrame({'filenames': test_sites, 'modification_status': test_labels})\
-    #     .to_csv(os.path.join(save_dir_cell, "test", "data.csv.gz"), index=False)
-    # pd.DataFrame({'filenames': val_sites, 'modification_status': val_labels})\
-    #     .to_csv(os.path.join(save_dir_cell, "val", "data.csv.gz"), index=False)
+    for mode in ('train', 'test'):
+        mode_dir = os.path.join(save_dir, mode)
+        os.makedirs(mode_dir)
+    
+    train_labels_df, test_labels_df = labels.iloc[train_idx], labels.iloc[test_idx]
+    retrieve_and_save_norm_constants(inference_dir, train_labels_df["fnames"],
+                                     save_dir, n_processes=n_processes)
+    train_labels_df.to_csv(os.path.join(save_dir, "train", "data.csv.gz"))
+    test_labels_df.to_csv(os.path.join(save_dir, "test", "data.csv.gz"))
