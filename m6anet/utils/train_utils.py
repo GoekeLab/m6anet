@@ -1,6 +1,7 @@
 import numpy as np
 import math
 import os
+import h5py
 import torch
 from functools import partial
 from multiprocessing import Pool
@@ -264,7 +265,7 @@ def load_file(fpath):
     with h5py.File(fpath, 'r') as f:
         return f['X'][:]
 
-        
+
 def compute_sum_and_sum_square(fpath):
     X = load_file(fpath)
     return len(X), np.sum(X, axis=0), np.sum(X**2, axis=0)
