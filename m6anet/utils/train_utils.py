@@ -269,6 +269,7 @@ def retrieve_and_save_norm_constants(input_dir, fpaths, out_dir, n_processes=1):
         start_idx = indices[i]
         kmer_fpaths = sorted_fpaths[start_idx: indices[i + 1] if i < len(kmers) -1 else None]
         tasks = [(os.path.join(input_dir, fpath)) for fpath in kmer_fpaths]
+        print(tasks)
         with Pool(n_processes) as p:
             sum_arrs = [x for x in tqdm(p.imap_unordered(compute_sum_and_sum_square, tasks), 
                                         total=len(kmer_fpaths), 
