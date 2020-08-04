@@ -8,6 +8,7 @@ from torch.optim import lr_scheduler
 from sklearn.metrics import accuracy_score, roc_curve, precision_recall_curve, auc
 from torch.nn.utils import clip_grad_norm_
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 
 def get_roc_auc(y_true, y_pred):
