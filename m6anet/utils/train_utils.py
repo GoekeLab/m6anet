@@ -292,7 +292,7 @@ def prepare_data_for_training(inference_dir, save_dir, labels,
         os.makedirs(mode_dir)
     
     train_labels_df, test_labels_df = labels.iloc[train_idx], labels.iloc[test_idx]
-    retrieve_and_save_norm_constants(inference_dir, train_labels_df["fnames"],
+    retrieve_and_save_norm_constants(inference_dir, train_labels_df["fnames"].values,
                                      save_dir, n_processes=n_processes)
     train_labels_df.to_csv(os.path.join(save_dir, "train", "data.csv.gz"))
     test_labels_df.to_csv(os.path.join(save_dir, "test", "data.csv.gz"))
