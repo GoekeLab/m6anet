@@ -260,6 +260,11 @@ def cross_validate(model, optimizer, data_dir, ds,
         print("=======================================================")
 
 
+def compute_sum_and_sum_square(fpath):
+    X = load_file(fpath)
+    return len(X), np.sum(X, axis=0), np.sum(X**2, axis=0)
+
+    
 def retrieve_and_save_norm_constants(input_dir, fpaths, out_dir, n_processes=1):
     all_kmers = np.array([x.split("_")[2] for x in fpaths])
     sort_idx = np.argsort(all_kmers)
