@@ -1,0 +1,4 @@
+[console_scripts]
+m6anet-dataprep = m6anet.scripts.dataprep:main
+m6anet-inference = m6anet.scripts.inference:main
+

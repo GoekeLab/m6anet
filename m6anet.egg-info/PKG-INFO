@@ -1,0 +1,19 @@
+Metadata-Version: 1.2
+Name: m6anet
+Version: 0.0.1
+Summary: m6anet is a python package for detection of m6a modifications from Nanopore direct RNA sequencing data.
+Home-page: https://github.com/GoekeLab/m6anet
+Author: Christopher Hendra
+Maintainer-email: christopher.hendra@u.nus.edu
+License: MIT
+Description: # m6ANet
+Platform: UNKNOWN
+Classifier: Development Status :: 1 - Planning
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Topic :: Software Development :: Libraries
+Classifier: Topic :: Scientific/Engineering :: Bio-Informatics
+Classifier: Intended Audience :: Science/Research
+Requires-Python: >=3.5
