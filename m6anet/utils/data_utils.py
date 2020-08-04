@@ -11,7 +11,7 @@ class TrainDS(Dataset):
         self.read_info = pd.read_csv(os.path.join(root_dir, mode, "data.csv.gz"))
         self.norm_constant = pd.read_csv(os.path.join(root_dir, "norm_constant.csv")).set_index("0")
         self.labels = self.read_info["modification_status"]
-        self.sites = [os.path.join(data_dir, fname) for fname in self.read_info["filenames"].values]
+        self.sites = [os.path.join(data_dir, fname) for fname in self.read_info["fnames"].values]
         self.all_kmers = list(["".join(x) for x in product(['A', 'G', 'T'], ['G', 'A'], ['A'], ['C'], ['A', 'C', 'T'])])
         self.kmer_to_int = {self.all_kmers[i]: i for i in range(len(self.all_kmers))}
         self.int_to_kmer =  {i: self.all_kmers[i] for i in range(len(self.all_kmers))}
