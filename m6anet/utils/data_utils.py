@@ -15,7 +15,7 @@ class TrainDS(Dataset):
         self.all_kmers = list(["".join(x) for x in product(['A', 'G', 'T'], ['G', 'A'], ['A'], ['C'], ['A', 'C', 'T'])])
         self.kmer_to_int = {self.all_kmers[i]: i for i in range(len(self.all_kmers))}
         self.int_to_kmer =  {i: self.all_kmers[i] for i in range(len(self.all_kmers))}
-        self.kmers = np.array([self.kmer_to_int[x.split("_")[4]] for x in self.read_info["filenames"].values])
+        self.kmers = np.array([self.kmer_to_int[x.split("_")[4]] for x in self.read_info["fnames"].values])
 
     def __len__(self):
         return len(self.sites)
