@@ -284,7 +284,8 @@ def retrieve_and_save_norm_constants(input_dir, fpaths, out_dir, n_processes=1):
 
     
 def prepare_data_for_training(inference_dir, save_dir, data_dir, labels,
-                              train_idx, test_idx, n_processes=1):
+                              train_idx, test_idx, val_idx=None,
+                              n_processes=1):
 
     for mode in ('train', 'test'):
         mode_dir = os.path.join(save_dir, mode)
@@ -295,3 +296,8 @@ def prepare_data_for_training(inference_dir, save_dir, data_dir, labels,
                                      save_dir, n_processes=n_processes)
     train_labels_df.to_csv(os.path.join(save_dir, "train", "data.csv.gz"))
     test_labels_df.to_csv(os.path.join(save_dir, "test", "data.csv.gz"))
+
+    if val_idx is not None:
+        os.makedirs(os.path.join(save_dir, "val"))
+        val_labels_df = labels.iloc[val_idx]
+        val_labels_df.to_csv(os.path.join(save_dir, "val", "data.csv.gz"))
