@@ -85,7 +85,7 @@ def assign_group_to_index(batch):
         num_reads = batch[i][3]
         idx_per_group.append(np.arange(curr_idx, curr_idx + num_reads))
         curr_idx += num_reads
-    return np.array(idx_per_group)
+    return np.array(idx_per_group, dtype='object')
 
 
 def assign_group_to_index_val(batch):
@@ -95,7 +95,7 @@ def assign_group_to_index_val(batch):
         num_reads = batch[i][2]
         idx_per_group.append(np.arange(curr_idx, curr_idx + num_reads))
         curr_idx += num_reads
-    return np.array(idx_per_group)
+    return np.array(idx_per_group, dtype='object')
 
 
 def custom_collate(batch):
