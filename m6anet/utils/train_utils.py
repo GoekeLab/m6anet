@@ -205,6 +205,9 @@ def fit(model, train_dl, device, opt, criterion, n_epochs,
             model_states.append(model.state_dict())
     
     if save_dir is not None:
+        if not os.path.exists(save_dir):
+            os.mkdir(save_dir)
+        
         np.save(os.path.join(save_dir, "train_loss{}.npy".format(train_prefix)), running_train_losses)
         np.save(os.path.join(save_dir, "test_loss{}.npy".format(test_prefix)), running_test_losses)
 
