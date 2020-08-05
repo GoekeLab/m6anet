@@ -207,10 +207,10 @@ def fit(model, train_dl, device, opt, criterion, n_epochs,
     if save_dir is not None:
         if not os.path.exists(save_dir):
             os.mkdir(save_dir)
-        
-        np.save(os.path.join(save_dir, "train_loss{}.npy".format(train_prefix)), running_train_losses)
-        np.save(os.path.join(save_dir, "test_loss{}.npy".format(test_prefix)), running_test_losses)
 
+        torch.save(running_train_losses, os.path.join(save_dir, "train_loss{}.pt".format(train_prefix)))
+        torch.save(running_test_losses, os.path.join(save_dir, "test_loss{}.pt".format(test_prefix)))
+        torch.save(model_states, os.path.join(save_dir, "model_states.pt"))
     return running_train_losses, running_test_losses, test_loss_per_epoch, model_states
 
 
