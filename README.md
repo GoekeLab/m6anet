@@ -36,11 +36,15 @@ $ m6anet-dataprep --eventalign demo_data/eventalign.txt \
 ```
 Output files: `eventalign.hdf5`, `eventalign.log`, `inference`, `prepare_for_inference.log`
 
-Now we can run m6anet over our dataestimating differential modification using `m6anet-inference`
+Now we can run m6anet over our data using `m6anet-inference`
 ```sh
 $ m6anet-inference -i dataprep -o . -m m6anet/model/ -n 4
 ```
 Output files: `m6Anet_predictions.csv.gz`
+
+### Contributors
+
+This package is developed and maintaned by [Christopher Hendra](https://github.com/chrishendra93) and [Jonathan Göke](https://github.com/jonathangoeke). If you want to contribute, please leave an issue. Thank you.
 ### License
 MIT
 
