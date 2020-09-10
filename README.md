@@ -9,6 +9,7 @@ m6anet requires [Python3](https://www.python.org) to run.
 To install our xpore package and its dependencies, run
 
 ```sh
+$ git clone git@github.com:GoekeLab/m6anet.git
 $ python setup.py install
 $ pip install -r requirements.txt 
 ```
