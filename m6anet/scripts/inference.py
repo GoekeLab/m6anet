@@ -65,7 +65,7 @@ def main():
         os.makedirs(args.out_dir)
 
     df["proba"] = np.array(y_preds)
-    df[["transcript_id", "kmer", "n_samples", "proba", "filepath"]]\
+    df[["transcript_id", "position", "kmer", "n_samples", "proba", "filepath"]]\
         .to_csv(os.path.join(args.out_dir, "m6Anet_predictions.csv.gz"), index=False)
 
 
