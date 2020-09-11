@@ -18,7 +18,7 @@ setup(
     long_description=README,
     url='https://github.com/GoekeLab/m6anet',
     packages=find_packages(),
-    python_requires=">=3.6",
+    python_requires=">=3.8",
     install_requires=[
             'numpy>=1.18.0',
             'pandas>=0.25.3',
@@ -35,7 +35,7 @@ setup(
         'Development Status :: 1 - Planning',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.8',
         'Topic :: Software Development :: Libraries',
         'Topic :: Scientific/Engineering :: Bio-Informatics',
         'Intended Audience :: Science/Research',
