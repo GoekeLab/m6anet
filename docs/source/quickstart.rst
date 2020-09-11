@@ -29,6 +29,6 @@ The output files are stored in ``demo_data``:
 
 Now we can run m6anet over our data using m6anet-inference::
 
-    m6anet-inference -i dataprep -o . -m m6anet/model/ -n 4
+    m6anet-inference -i demo_data -o demo_data -m m6anet/model/ -n 4
 
-The output files `m6Anet_predictions.csv.gz` contains the probability of modification at each individual position for each transcript.
+The output files `demo_data/m6Anet_predictions.csv.gz` contains the probability of modification at each individual position for each transcript.
