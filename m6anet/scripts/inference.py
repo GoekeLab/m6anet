@@ -7,7 +7,7 @@ import h5py
 from tqdm import tqdm
 from torch.utils.data import DataLoader, Dataset
 from itertools import product
-from ..utils.data_utils import ValDS
+from ..utils.data_utils import ValDS, custom_collate_val
 from ..utils.model import MultiInstanceNNEmbedding
 
 
