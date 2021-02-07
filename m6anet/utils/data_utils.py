@@ -1,112 +1,64 @@
-import h5py
 import os
 import pandas as pd
 import numpy as np
 import torch
+import json
+import joblib
+from ..scripts.constants import NUM_NEIGHBORING_FEATURES, KMER_TO_INT
 from torch.utils.data import DataLoader, Dataset
+from torch.utils.data._utils.collate import default_collate
 from itertools import product
 
 
-class TrainDS(Dataset):
+class NanopolishDS(Dataset):
 
-    def __init__(self, root_dir, mode, data_dir):
-        self.data_dir = data_dir
-        self.read_info = pd.read_csv(os.path.join(root_dir, mode, "data.csv.gz"))
-        self.norm_constant = pd.read_csv(os.path.join(root_dir, "norm_constant.csv")).set_index("0")
-        self.labels = self.read_info["modification_status"]
-        self.sites = [os.path.join(data_dir, fname) for fname in self.read_info["fnames"].values]
-        self.all_kmers = list(["".join(x) for x in product(['A', 'G', 'T'], ['G', 'A'], ['A'], ['C'], ['A', 'C', 'T'])])
-        self.kmer_to_int = {self.all_kmers[i]: i for i in range(len(self.all_kmers))}
-        self.int_to_kmer =  {i: self.all_kmers[i] for i in range(len(self.all_kmers))}
-        self.kmers = np.array([self.kmer_to_int[x.split("_")[2]] for x in self.read_info["fnames"].values])
+    def __init__(self, root_dir, min_reads, norm_path):
+        self.data_info = self.initialize_data_info(root_dir, min_reads)
+        self.data_dir = os.path.join(root_dir, "data.json")
+        self.min_reads = min_reads
+        self.norm_dict = joblib.load(norm_path)
+
+    def initialize_data_info(self, fpath, min_reads):
+        data_index = pd.read_csv(os.path.join(fpath ,"data.index"))
+        read_count = pd.read_csv(os.path.join(fpath, "data.readcount"))
+        data_info = data_index.merge(read_count, on=["transcript_id", "transcript_position"])
+        return data_info[data_info["n_reads"] >= min_reads].reset_index(drop=True)
 
     def __len__(self):
-        return len(self.sites)
+        return len(self.data_info)
 
     def __getitem__(self, idx):
-        kmer = self.kmers[idx]
-        norm_info = self.norm_constant.loc[self.int_to_kmer[kmer]].values
-        mean, std = norm_info[:3], norm_info[3:]
-        if torch.is_tensor(idx):
-            idx = idx.tolist()
-        f = h5py.File(self.sites[idx], 'r')
-        X = (f['X'][:] - mean) / std
-        label = self.labels[idx]
-        n_reads = len(X)
-        f.close()
-        return (torch.Tensor(X),
-                torch.LongTensor([kmer]).repeat(len(X)),
-                torch.Tensor([label]),
-                n_reads)
+        with open(self.data_dir, 'r') as f:
+            tx_id, tx_pos, start_pos, end_pos = self.data_info.iloc[idx][["transcript_id", "transcript_position",
+                                                                        "start", "end"]]
+            f.seek(start_pos, 0)
+            json_str = f.read(end_pos - start_pos)
+            pos_info = json.loads(json_str)[tx_id][str(tx_pos)]
 
+            assert(len(pos_info.keys()) == 1)
 
-class ValDS(Dataset):
-
-    def __init__(self, norm_constant, data_dir, sites=None):
-        self.data_dir = data_dir
-        self.norm_constant = norm_constant.set_index("0")
-        
-        self.all_kmers = list(["".join(x) for x in product(['A', 'G', 'T'], ['G', 'A'], ['A'], ['C'], ['A', 'C', 'T'])])
-        self.kmer_to_int = {self.all_kmers[i]: i for i in range(len(self.all_kmers))}
-        self.int_to_kmer =  {i: self.all_kmers[i] for i in range(len(self.all_kmers))}
-        
-        if sites is None:
-            all_files = os.listdir(data_dir)
-            self.sites = np.array([os.path.join(data_dir, fname) for fname in all_files])
-            self.kmers = np.array([self.kmer_to_int[x.split("_")[2]] for x in all_files])
-
-        else:
-            self.sites = np.array([os.path.join(data_dir, fname) for fname in sites])
-            self.kmers = np.array([self.kmer_to_int[x.split("_")[2]] for x in sites])
+            kmer, features = list(pos_info.items())[0]
             
-            
-    def __len__(self):
-        return len(self.sites)
+            # Repeating kmer to the number of reads sampled
+            kmer = [kmer[i:i+5] for i in range(2 * NUM_NEIGHBORING_FEATURES + 1)]
+            mean, std = self.get_norm_factor(kmer)
+            kmer = np.repeat(np.array([KMER_TO_INT[kmer] for kmer in kmer])\
+                        .reshape(-1, 2 * NUM_NEIGHBORING_FEATURES + 1), self.min_reads, axis=0)
+            kmer = torch.Tensor(kmer)
 
-    def __getitem__(self, idx):
-        kmer = self.kmers[idx]
-        norm_info = self.norm_constant.loc[self.int_to_kmer[kmer]].values
-        mean, std = norm_info[:3], norm_info[3:]
-        if torch.is_tensor(idx):
-            idx = idx.tolist()
-        f = h5py.File(self.sites[idx], 'r')
-        X = (f['X'][:] - mean) / std
-        n_reads = len(X)
-        f.close()
-        return (torch.Tensor(X),
-                torch.LongTensor([kmer]).repeat(len(X)),
-                n_reads)
+            features = np.array(features)
+            features = features[np.random.choice(len(features), self.min_reads, replace=False), :]
+            features = torch.Tensor((features - mean) / std)
+            return features, kmer
 
+    def get_norm_factor(self, list_of_kmers):
+        norm_mean, norm_std = [], []
+        for kmer in list_of_kmers:
+            mean, std = self.norm_dict[kmer]
+            norm_mean.append(mean)
+            norm_std.append(std)
+        return np.concatenate(norm_mean, axis=1), np.concatenate(norm_std, axis=1)
 
-def assign_group_to_index(batch):
-    curr_idx = 0
-    idx_per_group = []
-    for i in range(len(batch)):
-        num_reads = batch[i][3]
-        idx_per_group.append(np.arange(curr_idx, curr_idx + num_reads))
-        curr_idx += num_reads
-    return np.array(idx_per_group, dtype='object')
-
-
-def assign_group_to_index_val(batch):
-    curr_idx = 0
-    idx_per_group = []
-    for i in range(len(batch)):
-        num_reads = batch[i][2]
-        idx_per_group.append(np.arange(curr_idx, curr_idx + num_reads))
-        curr_idx += num_reads
-    return np.array(idx_per_group, dtype='object')
-
-
-def custom_collate(batch):
-    return (torch.cat([item[0] for item in batch]),
-            torch.cat([item[1] for item in batch]),
-            assign_group_to_index(batch),
-            torch.cat([item[2] for item in batch])
-            )
-
-
-def custom_collate_val(batch):
-    return (torch.cat([item[0] for item in batch]),
-            torch.cat([item[1] for item in batch]),
-            assign_group_to_index_val(batch))
+def kmer_collate(batch):
+    return {key: batch for key, batch 
+            in zip (['X', 'kmer'], default_collate(batch))}
