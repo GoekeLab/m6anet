@@ -5,9 +5,7 @@ import os,re
 import multiprocessing 
 import h5py
 import csv
-import ujson
-from pyensembl import EnsemblRelease
-from pyensembl import Genome
+import pickle
 from operator import itemgetter
 from collections import defaultdict
 from io import StringIO
@@ -273,34 +271,34 @@ def preprocess_tx(tx_id,data_dict,out_paths,locks):  # todo
     # Sort and split 
     idx_sorted = np.lexsort((events['reference_kmer'],events['transcriptomic_position'],events['transcript_id']))
     key_tuples, index = np.unique(list(zip(events['transcript_id'][idx_sorted],events['transcriptomic_position'][idx_sorted],events['reference_kmer'][idx_sorted])),return_index = True,axis=0) #'chr',
-    x_arrays = np.split(events['norm_std'][idx_sorted], index[1:])
-    y_arrays = np.split(events['norm_mean'][idx_sorted], index[1:])
-    z_arrays = np.split(events['dwell_time'][idx_sorted], index[1:])
+##    y_arrays = np.split(events['norm_mean'][idx_sorted], index[1:])
+    y_arrays = np.split(events[['norm_mean','norm_std','dwell_time']][idx_sorted], index[1:])
     read_id_arrays = np.split(events['read_index'][idx_sorted], index[1:]) ####
     reference_kmer_arrays = np.split(events['reference_kmer'][idx_sorted], index[1:])
 
     # Prepare
     # print('Reformating the data for each genomic position ...')
-    data = defaultdict(dict)
+    data = {}
     # for each position, make it ready for json dump
-    for key_tuple,x_array,y_array,z_array,read_id_array,reference_kmer_array in zip(key_tuples,x_arrays,y_arrays,z_arrays,read_id_arrays,reference_kmer_arrays):
+    for key_tuple,y_array,read_id_array,reference_kmer_array in zip(key_tuples,y_arrays,read_id_arrays,reference_kmer_arrays):
         idx,position,kmer = key_tuple
         position = int(position)
         kmer = kmer
         if (len(set(reference_kmer_array)) == 1) and ('XXXXX' in set(reference_kmer_array)) or (len(y_array) == 0):
             continue
-        ####Hi Chris,
-        #####Can you figure out how to output a tuple with mean (y_array),sd(x_array),and dwell time(z_array), please?
-        data[position] = {kmer: list(np.around(y_array,decimals=2))}
+        data[position] = {kmer: list(y_array)}
 
     # write to file.
     log_str = '%s: Data preparation ... Done.' %(tx_id)
-    with locks['json'], open(out_paths['json'],'a') as f:
+    with locks['json'], open(out_paths['json'],'ab') as f:
         pos_start = f.tell()
-        f.write('{')
-        f.write('"%s":' %tx_id)
-        ujson.dump(data, f)
-        f.write('}\n')
+        entry_dict={}
+        entry_dict[tx_id]=data
+        pickle.dump(entry_dict, f)
+#        f.write(b'{')
+#        f.write('"%s":' %tx_id)
+#        ujson.dump(data, f)
+#        f.write(b'}\n')
         pos_end = f.tell()
         
     with locks['index'], open(out_paths['index'],'a') as f:
@@ -322,12 +320,9 @@ def main():
     summary_filepath = args.summary
     chunk_size = args.chunk_size
     out_dir = args.out_dir
-    ensembl_version = args.ensembl
-    ensembl_species = args.species
     readcount_min = args.readcount_min    
     readcount_max = args.readcount_max
     resume = args.resume
-    genome = args.genome
 
     customised_genome = args.customised_genome
     if customised_genome and (None in [args.reference_name,args.annotation_name,args.gtf_path_or_url,args.transcript_fasta_paths_or_urls]):
