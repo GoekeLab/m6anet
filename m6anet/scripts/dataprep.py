@@ -10,10 +10,13 @@ from pyensembl import EnsemblRelease
 from pyensembl import Genome
 from operator import itemgetter
 from collections import defaultdict
+from itertools import groupby
 from io import StringIO
 
 from . import helper
+from .constants import M6A_KMERS, KMER_TO_INT
 from ..utils import misc
+
 
 def get_args():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -53,6 +56,64 @@ def get_args():
 
     parser._action_groups.append(optional)
     return parser.parse_args()
+
+def partition_into_continuous_positions(arr, window_size=1):
+    arr = arr[np.argsort(arr["transcriptomic_position"])]
+    float_features = ['dwell_time', 'norm_std', 'norm_mean']
+    float_dtypes = [('norm_mean', '<f8'), ('norm_std', '<f8'), ('dwell_time', '<f8')]
+    
+    float_arr = arr[float_features].astype(float_dtypes).view('<f8').reshape(-1, 3)
+    kmer_arr = arr["reference_kmer"].reshape(-1, 1)
+    tx_pos_arr = arr["transcriptomic_position"]
+    tx_id_arr = arr["transcript_id"]
+
+    partitions = [list(map(itemgetter(0), g)) for k, g in groupby(enumerate(tx_pos_arr), 
+                                                                  lambda x: x[0] - x[1])]
+    return [(float_arr[partition],
+             kmer_arr[partition], tx_id_arr[partition], tx_pos_arr[partition]) 
+            for partition in partitions if len(partition) > 2 * window_size + 1]
+
+def filter_by_kmer(partition, kmers, window_size):
+    feature_arr, kmer_arr, tx_id_arr, tx_pos_arr = partition
+    kmers_5 = kmer_arr[:, (2 * window_size + 1) // 2]
+    mask = np.isin(kmers_5, kmers)
+    filtered_feature_arr = feature_arr[mask, :]
+    filtered_kmer_arr = kmer_arr[mask, :]
+    filtered_tx_pos_arr = tx_pos_arr[mask]
+    filtered_tx_id_arr = tx_id_arr[mask]
+
+    if len(filtered_kmer_arr) == 0:
+        return []
+    else:
+        return filtered_feature_arr, filtered_kmer_arr, filtered_tx_id_arr, filtered_tx_pos_arr
+
+def filter_partitions(partitions, window_size, kmers):
+    windowed_partition = [create_features(partition, window_size) for partition in partitions]
+    filtered_by_kmers = [filter_by_kmer(partition, kmers, window_size) for partition in windowed_partition]
+    final_partitions = [x for x in filtered_by_kmers if len(x) > 0]
+    return final_partitions
+
+def roll(to_roll, window_size=1):
+    nex = np.concatenate([np.roll(to_roll, i, axis=0) for i in range(-1, - window_size - 1, -1)],
+                          axis=1)
+    prev = np.concatenate([np.roll(to_roll, i, axis=0) for i in range(window_size, 0, -1)], axis=1)
+    return np.concatenate((prev, to_roll, nex), axis=1)[window_size: -window_size, :]
+
+def create_features(partition, window_size=1):
+    float_arr, kmer_arr, tx_id_arr, tx_pos_arr = partition
+    return roll(float_arr, window_size), roll(kmer_arr, window_size), \
+        tx_id_arr[window_size: -window_size], tx_pos_arr[window_size: -window_size]
+
+def filter_events(events, window_size, kmers):
+    events = partition_into_continuous_positions(events)
+    events = filter_partitions(events, window_size, kmers)
+    return events
+
+def combine_sequence(kmers):
+    kmer = kmers[0]
+    for _kmer in kmers[1:]:
+        kmer += _kmer[-1]
+    return kmer
 
 def index(eventalign_result,pos_start,out_paths,locks):
    eventalign_result = eventalign_result.set_index(['contig','read_index'])
@@ -269,29 +330,48 @@ def preprocess_tx(tx_id,data_dict,out_paths,locks):  # todo
         events += [events_per_read]
         
     events = np.concatenate(events)
-   
+    events = filter_events(events, 1, M6A_KMERS)
+
+    if len(events) == 0:
+        return
+    else:
+        features_arrays = np.concatenate([event[0] for event in events])
+        reference_kmer_arrays = np.array([combine_sequence(kmer) for kmer in np.concatenate([event[1] for event in events])])
+        transcript_id_arrays = np.concatenate([event[2] for event in events])
+        transcriptomic_positions_arrays = np.concatenate([event[3] for event in events])
+
     # Sort and split 
-    idx_sorted = np.lexsort((events['reference_kmer'],events['transcriptomic_position'],events['transcript_id']))
-    key_tuples, index = np.unique(list(zip(events['transcript_id'][idx_sorted],events['transcriptomic_position'][idx_sorted],events['reference_kmer'][idx_sorted])),return_index = True,axis=0) #'chr',
-    x_arrays = np.split(events['norm_std'][idx_sorted], index[1:])
-    y_arrays = np.split(events['norm_mean'][idx_sorted], index[1:])
-    z_arrays = np.split(events['dwell_time'][idx_sorted], index[1:])
-    read_id_arrays = np.split(events['read_index'][idx_sorted], index[1:]) ####
-    reference_kmer_arrays = np.split(events['reference_kmer'][idx_sorted], index[1:])
+    idx_sorted = np.lexsort((reference_kmer_arrays,transcriptomic_positions_arrays,transcript_id_arrays))
+    key_tuples, index = np.unique(list(zip(transcript_id_arrays[idx_sorted],transcriptomic_positions_arrays[idx_sorted],
+                                           reference_kmer_arrays[idx_sorted])),return_index = True,axis=0) #'chr',
+    features_arrays = np.split(features_arrays[idx_sorted], index[1:])
+    reference_kmer_arrays = np.split(reference_kmer_arrays[idx_sorted], index[1:])
+
+    # read_id_arrays = np.split(events['read_index'][idx_sorted], index[1:]) ####
+    # idx_sorted = np.lexsort((events['reference_kmer'],events['transcriptomic_position'],events['transcript_id']))
+    # key_tuples, index = np.unique(list(zip(events['transcript_id'][idx_sorted],events['transcriptomic_position'][idx_sorted],events['reference_kmer'][idx_sorted])),return_index = True,axis=0) #'chr',
+    # features = ["dwell_time", "norm_std", "norm_mean"]
+
+    # features_arrays = np.split(events[features][idx_sorted], index[1:])
+
+    # x_arrays = np.split(events['norm_std'][idx_sorted], index[1:])
+    # y_arrays = np.split(events['norm_mean'][idx_sorted], index[1:])
+    # z_arrays = np.split(events['dwell_time'][idx_sorted], index[1:])
+
 
     # Prepare
     # print('Reformating the data for each genomic position ...')
     data = defaultdict(dict)
     # for each position, make it ready for json dump
-    for key_tuple,x_array,y_array,z_array,read_id_array,reference_kmer_array in zip(key_tuples,x_arrays,y_arrays,z_arrays,read_id_arrays,reference_kmer_arrays):
-        idx,position,kmer = key_tuple
+    for key_tuple, features_array, reference_kmer_array in zip(key_tuples, features_arrays, reference_kmer_arrays):
+        _,position,kmer = key_tuple
         position = int(position)
         kmer = kmer
-        if (len(set(reference_kmer_array)) == 1) and ('XXXXX' in set(reference_kmer_array)) or (len(y_array) == 0):
+        if (len(set(reference_kmer_array)) == 1) and ('XXXXX' in set(reference_kmer_array)) or (len(features_array) == 0):
             continue
         ####Hi Chris,
         #####Can you figure out how to output a tuple with mean (y_array),sd(x_array),and dwell time(z_array), please?
-        data[position] = {kmer: list(np.around(y_array,decimals=2))}
+        data[position] = {kmer: features_array.tolist()}
 
     # write to file.
     log_str = '%s: Data preparation ... Done.' %(tx_id)
