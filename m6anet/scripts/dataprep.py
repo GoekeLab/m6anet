@@ -249,9 +249,9 @@ def parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min
         #     f.write('"genes":{')
         open(out_paths['json'],'w').close()
         with open(out_paths['index'],'w') as f:
-            f.write('idx,start,end\n') # header
+            f.write('transcript_id,transcript_position,start,end\n') # header
         with open(out_paths['readcount'],'w') as f:
-            f.write('idx,n_reads\n') # header
+            f.write('transcript_id,transcript_position,n_reads\n') # header
         open(out_paths['log'],'w').close()
 
     # Create communication queues.
@@ -375,20 +375,26 @@ def preprocess_tx(tx_id,data_dict,out_paths,locks):  # todo
 
     # write to file.
     log_str = '%s: Data preparation ... Done.' %(tx_id)
-    with locks['json'], open(out_paths['json'],'a') as f:
-        pos_start = f.tell()
-        f.write('{')
-        f.write('"%s":' %tx_id)
-        ujson.dump(data, f)
-        f.write('}\n')
-        pos_end = f.tell()
+    with locks['json'], open(out_paths['json'],'a') as f, \
+            locks['index'], open(out_paths['index'],'a') as g, \
+            locks['readcount'], open(out_paths['readcount'],'a') as h:
         
-    with locks['index'], open(out_paths['index'],'a') as f:
-        f.write('%s,%d,%d\n' %(tx_id,pos_start,pos_end))
+        for pos, dat in data.items():
+            pos_start = f.tell()
+            f.write('{')
+            f.write('"%s":{"%d":' %(tx_id,pos))
+            ujson.dump(dat, f)
+            f.write('}}\n')
+            pos_end = f.tell()
         
-    with locks['readcount'], open(out_paths['readcount'],'a') as f: #todo: repeats no. of tx >> don't want it.
-        n_reads = len(data_dict)
-        f.write('%s,%d\n' %(tx_id,n_reads))
+            # with locks['index'], open(out_paths['index'],'a') as f:
+            g.write('%s,%d,%d,%d\n' %(tx_id,pos,pos_start,pos_end))
+        
+            # with locks['readcount'], open(out_paths['readcount'],'a') as f: #todo: repeats no. of tx >> don't want it.
+            n_reads = 0
+            for kmer, features in dat.items():
+                n_reads += len(features)
+            h.write('%s,%d,%d\n' %(tx_id,pos,n_reads))
         
     with locks['log'], open(out_paths['log'],'a') as f:
         f.write(log_str + '\n')
