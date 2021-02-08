@@ -438,7 +438,7 @@ def main():
     if not helper.is_successful(eventalign_log_filepath) and not resume: #some slight hack to skip index creation again after it is successful
         parallel_index(eventalign_filepath,summary_filepath,chunk_size,out_dir,n_processes,resume)
     
-    parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min,readcount_max,resume)
+    parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min,readcount_max,False) #TO DO: RESUME FUNCTION
 
 if __name__ == '__main__':
     main()
