@@ -22,13 +22,15 @@ setup(
     install_requires=[
             'numpy>=1.18.0',
             'pandas>=0.25.3',
+            'scikit-learn>=0.24.1',
             'scipy>=1.4.1',
             'h5py>=2.10.0',
             'torch>=1.6.0',
+            'toml>=0.10.2',
             'tqdm'
             ],
     entry_points={'console_scripts': ["m6anet-dataprep={}.scripts.dataprep:main".format(__pkg_name__),
-                                      "m6anet-inference={}.scripts.inference:main".format(__pkg_name__)]},
+                                      "m6anet-run_inference={}.scripts.run_inference:main".format(__pkg_name__)]},
     classifiers=[
         # Trove classifiers
         # (https://pypi.python.org/pypi?%3Aaction=list_classifiers)
