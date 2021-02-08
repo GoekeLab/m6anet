@@ -24,10 +24,9 @@ setup(
             'pandas>=0.25.3',
             'scikit-learn>=0.24.1',
             'scipy>=1.4.1',
-            'h5py>=2.10.0',
+            'ujson',
             'torch>=1.6.0',
-            'toml>=0.10.2',
-            'tqdm'
+            'toml>=0.10.2'
             ],
     entry_points={'console_scripts': ["m6anet-dataprep={}.scripts.dataprep:main".format(__pkg_name__),
                                       "m6anet-run_inference={}.scripts.run_inference:main".format(__pkg_name__)]},
