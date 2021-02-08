@@ -435,9 +435,8 @@ def main():
     
     # (1) For each read, combine multiple events aligned to the same positions, the results from nanopolish eventalign, into a single event per position.
     eventalign_log_filepath = os.path.join(out_dir,'eventalign.log')
-    if not helper.is_successful(eventalign_log_filepath) and not resume: #some slight hack to skip index creation again after it is successful
-        parallel_index(eventalign_filepath,summary_filepath,chunk_size,out_dir,n_processes,resume)
-    
+    # if not helper.is_successful(eventalign_log_filepath) and not resume: #some slight hack to skip index creation again after it is successful
+    parallel_index(eventalign_filepath,summary_filepath,chunk_size,out_dir,n_processes,resume)
     parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min,readcount_max,False) #TO DO: RESUME FUNCTION
 
 if __name__ == '__main__':
