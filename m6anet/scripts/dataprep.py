@@ -229,6 +229,9 @@ def combine(events_str):
         df_events = eventalign_result[features]
         np_events = np.rec.fromrecords(df_events, names=[*df_events])
         return np_events
+    else:
+        return np.array([])
+
 
 def parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min,readcount_max,resume):
     
