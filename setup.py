@@ -22,6 +22,7 @@ setup(
     install_requires=[
             'numpy>=1.18.0',
             'pandas>=0.25.3',
+            'pyensembl>=1.9.1',
             'scikit-learn>=0.24.1',
             'scipy>=1.4.1',
             'ujson',
