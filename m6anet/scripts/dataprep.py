@@ -179,8 +179,7 @@ def parallel_index(eventalign_filepath,summary_filepath,chunk_size,out_dir,n_pro
 
 def combine(events_str):
     f_string = StringIO(events_str)
-    eventalign_result = pd.read_csv(f_string,delimiter='\t',names=['contig','position','reference_kmer','read_index',
-                         'event_level_mean','event_stdv','event_length','model_kmer','start_idx', 'end_idx'])
+    eventalign_result = pd.read_csv(f_string,delimiter='\t',names=['contig','position','reference_kmer','read_index','strand','event_index','event_level_mean','event_stdv','event_length','model_kmer','model_mean','model_stdv','standardized_level','start_idx','end_idx'])
     f_string.close()
     cond_successfully_eventaligned = eventalign_result['reference_kmer'] == eventalign_result['model_kmer']
     if cond_successfully_eventaligned.sum() != 0:
@@ -436,7 +435,7 @@ def main():
     # (1) For each read, combine multiple events aligned to the same positions, the results from nanopolish eventalign, into a single event per position.
     eventalign_log_filepath = os.path.join(out_dir,'eventalign.log')
     # if not helper.is_successful(eventalign_log_filepath) and not resume: #some slight hack to skip index creation again after it is successful
-    parallel_index(eventalign_filepath,summary_filepath,chunk_size,out_dir,n_processes,resume)
+#   parallel_index(eventalign_filepath,summary_filepath,chunk_size,out_dir,n_processes,resume)
     parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min,readcount_max,False) #TO DO: RESUME FUNCTION
 
 if __name__ == '__main__':
