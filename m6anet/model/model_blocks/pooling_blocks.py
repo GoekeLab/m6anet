@@ -87,7 +87,7 @@ class Attention(PoolingFilter):
 class ProbabilityAttention(PoolingFilter):
 
     def __init__(self, input_channel, hidden_layers_1, hidden_layers_2,
-                 n_bins, sigma, activation='relu', n_reads_per_site=5,
+                 n_bins, sigma, activation='relu', n_reads_per_site=20,
                  read_classifier='prod_pooling'):
         super(PoolingFilter, self).__init__()
         self.site_decoder = KDEGatedAttentionLayer(input_channel, hidden_layers_1, hidden_layers_2,

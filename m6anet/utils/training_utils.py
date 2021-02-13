@@ -232,7 +232,6 @@ def inference(model, dl, device, n_iterations=1):
                 X = {key: val.to(device) for key, val in batch.items()}
                 y_pred = model(X)
                 y_pred = y_pred.detach().cpu().numpy()
-
                 if len(y_pred.shape) == 1:
                     y_pred_tmp.extend(y_pred)
                 else:

@@ -25,12 +25,11 @@ def argparser():
     parser.add_argument("--out_dir", default=None, required=True)
     parser.add_argument("--model_config", default=None)
     parser.add_argument("--model_state_dict", default=None)
-    parser.add_argument("--device", default="cuda:2")
     parser.add_argument("--batch_size", default=64, type=int)
     parser.add_argument("--num_workers", default=25, type=int)
     parser.add_argument("--min_reads", default=20, type=int)
     parser.add_argument("--num_iterations", default=1, type=int)
-
+    parser.add_argument("--device", default='cpu', type=str)
     return parser
 
 
@@ -43,9 +42,9 @@ def run_inference(model_config, args):
     num_iterations = args.num_iterations
     min_reads = args.min_reads
     batch_size = args.batch_size
-
+    device = args.device
     model_config = toml.load(args.model_config)
-    model_state_dict = torch.load(args.model_state_dict)
+    model_state_dict = torch.load(args.model_state_dict, map_location=torch.device(device))
 
     model = MILModel(model_config, min_reads).to(device)
     model.load_state_dict(model_state_dict)
@@ -55,7 +54,6 @@ def run_inference(model_config, args):
 
     ds = NanopolishDS(input_dir, min_reads, NORM_PATH)
     dl = DataLoader(ds, num_workers=num_workers, collate_fn=kmer_collate, batch_size=batch_size, worker_init_fn=random_fn, shuffle=False)
-
     result_df = ds.data_info[["transcript_id", "transcript_position", "n_reads"]].copy(deep=True)   
     results = inference(model, dl, device, num_iterations)
     result_df["probability_modified"] = results 

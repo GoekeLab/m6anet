@@ -14,7 +14,7 @@ from itertools import groupby
 from io import StringIO
 
 from . import helper
-from .constants import M6A_KMERS, KMER_TO_INT
+from .constants import M6A_KMERS, KMER_TO_INT, NUM_NEIGHBORING_FEATURES
 from ..utils import misc
 
 
@@ -326,23 +326,32 @@ def preprocess_tx(tx_id,data_dict,out_paths,locks):  # todo
     # Concatenate
     if len(data_dict) == 0:
         return
+    
+    features_arrays = []
+    reference_kmer_arrays = []
+    transcript_id_arrays = []
+    transcriptomic_positions_arrays = []
 
     for read_id,events_per_read in data_dict.items(): 
         # print(read_id)
-        events += [events_per_read]
-        
-    events = np.concatenate(events)
-    events = filter_events(events, 1, M6A_KMERS)
+        events_per_read = filter_events(events_per_read, NUM_NEIGHBORING_FEATURES, M6A_KMERS)
+        for event_per_read in events_per_read:
+            features_arrays.append(event_per_read[0])
+            reference_kmer_arrays.append([combine_sequence(kmer) for kmer in event_per_read[1]])
+            transcript_id_arrays.append(event_per_read[2])
+            transcriptomic_positions_arrays.append(event_per_read[3])
 
-    if len(events) == 0:
+
+    if len(features_arrays) == 0:
         return
     else:
-        features_arrays = np.concatenate([event[0] for event in events])
-        reference_kmer_arrays = np.array([combine_sequence(kmer) for kmer in np.concatenate([event[1] for event in events])])
-        transcript_id_arrays = np.concatenate([event[2] for event in events])
-        transcriptomic_positions_arrays = np.concatenate([event[3] for event in events])
+        features_arrays = np.concatenate(features_arrays)
+        reference_kmer_arrays = np.concatenate(reference_kmer_arrays)
+        transcript_id_arrays = np.concatenate(transcript_id_arrays)
+        transcriptomic_positions_arrays = np.concatenate(transcriptomic_positions_arrays)
+        assert(len(features_arrays) == len(reference_kmer_arrays) == len(transcript_id_arrays) == len(transcriptomic_positions_arrays))
+    # Sort and split
 
-    # Sort and split 
     idx_sorted = np.lexsort((reference_kmer_arrays,transcriptomic_positions_arrays,transcript_id_arrays))
     key_tuples, index = np.unique(list(zip(transcript_id_arrays[idx_sorted],transcriptomic_positions_arrays[idx_sorted],
                                            reference_kmer_arrays[idx_sorted])),return_index = True,axis=0) #'chr',
@@ -364,6 +373,8 @@ def preprocess_tx(tx_id,data_dict,out_paths,locks):  # todo
     # Prepare
     # print('Reformating the data for each genomic position ...')
     data = defaultdict(dict)
+
+
     # for each position, make it ready for json dump
     for key_tuple, features_array, reference_kmer_array in zip(key_tuples, features_arrays, reference_kmer_arrays):
         _,position,kmer = key_tuple
@@ -435,7 +446,7 @@ def main():
     # (1) For each read, combine multiple events aligned to the same positions, the results from nanopolish eventalign, into a single event per position.
     eventalign_log_filepath = os.path.join(out_dir,'eventalign.log')
     # if not helper.is_successful(eventalign_log_filepath) and not resume: #some slight hack to skip index creation again after it is successful
-#   parallel_index(eventalign_filepath,summary_filepath,chunk_size,out_dir,n_processes,resume)
+    parallel_index(eventalign_filepath,summary_filepath,chunk_size,out_dir,n_processes,resume)
     parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min,readcount_max,False) #TO DO: RESUME FUNCTION
 
 if __name__ == '__main__':
