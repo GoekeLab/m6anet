@@ -11,7 +11,7 @@ from copy import deepcopy
 from ..model.model import MILModel
 from .constants import NORM_PATH
 from ..utils.builder import random_fn
-from ..utils.data_utils import NanopolishDS, kmer_collate
+from ..utils.data_utils import NanopolishDS, inference_collate
 from ..utils.training_utils import inference
 from torch.utils.data import DataLoader
 
@@ -53,7 +53,7 @@ def run_inference(model_config, args):
         os.makedirs(out_dir)
 
     ds = NanopolishDS(input_dir, min_reads, NORM_PATH)
-    dl = DataLoader(ds, num_workers=num_workers, collate_fn=kmer_collate, batch_size=batch_size, worker_init_fn=random_fn, shuffle=False)
+    dl = DataLoader(ds, num_workers=num_workers, collate_fn=inference_collate, batch_size=batch_size, worker_init_fn=random_fn, shuffle=False)
     result_df = ds.data_info[["transcript_id", "transcript_position", "n_reads"]].copy(deep=True)   
     results = inference(model, dl, device, num_iterations)
     result_df["probability_modified"] = results 

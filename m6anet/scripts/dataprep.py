@@ -29,9 +29,6 @@ def get_args():
     required.add_argument('--summary', dest='summary', help='eventalign summary filepath, the output from nanopolish.',required=True)
     required.add_argument('--out_dir', dest='out_dir', help='output directory.',required=True)
     
-    
-
-
     # Optional
     # Use ensembl db
     optional.add_argument('--ensembl', dest='ensembl', help='ensembl version for gene-transcript mapping.',type=int, default=91)
@@ -358,18 +355,6 @@ def preprocess_tx(tx_id,data_dict,out_paths,locks):  # todo
     features_arrays = np.split(features_arrays[idx_sorted], index[1:])
     reference_kmer_arrays = np.split(reference_kmer_arrays[idx_sorted], index[1:])
 
-    # read_id_arrays = np.split(events['read_index'][idx_sorted], index[1:]) ####
-    # idx_sorted = np.lexsort((events['reference_kmer'],events['transcriptomic_position'],events['transcript_id']))
-    # key_tuples, index = np.unique(list(zip(events['transcript_id'][idx_sorted],events['transcriptomic_position'][idx_sorted],events['reference_kmer'][idx_sorted])),return_index = True,axis=0) #'chr',
-    # features = ["dwell_time", "norm_std", "norm_mean"]
-
-    # features_arrays = np.split(events[features][idx_sorted], index[1:])
-
-    # x_arrays = np.split(events['norm_std'][idx_sorted], index[1:])
-    # y_arrays = np.split(events['norm_mean'][idx_sorted], index[1:])
-    # z_arrays = np.split(events['dwell_time'][idx_sorted], index[1:])
-
-
     # Prepare
     # print('Reformating the data for each genomic position ...')
     data = defaultdict(dict)
@@ -382,8 +367,6 @@ def preprocess_tx(tx_id,data_dict,out_paths,locks):  # todo
         kmer = kmer
         if (len(set(reference_kmer_array)) == 1) and ('XXXXX' in set(reference_kmer_array)) or (len(features_array) == 0):
             continue
-        ####Hi Chris,
-        #####Can you figure out how to output a tuple with mean (y_array),sd(x_array),and dwell time(z_array), please?
         data[position] = {kmer: features_array.tolist()}
 
     # write to file.

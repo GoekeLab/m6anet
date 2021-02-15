@@ -36,7 +36,7 @@ def train_one_epoch(model, pair_dataloader, device, optimizer, criterion, schedu
 
     loss_results = {}
     for batch in pair_dataloader:
-        y_true = batch.pop('label').to(device).flatten()
+        y_true = batch.pop('y').to(device).flatten()
         X = {key: val.to(device) for key, val in batch.items()}
         train_results = criterion(model, X, y_true)
         y_pred, loss = train_results.pop("y_pred"), train_results.pop("loss")
@@ -92,18 +92,12 @@ def train(model, train_dl, test_dl, optimizer, n_epoch, device, train_criterion,
           test_criterion, scheduler=None, save_dir=None, clip_grad=None,
           save_per_epoch=10, epoch_increment=0, n_iterations=1):
     
-    assert(train_dl.dataset.num_neighboring_features == test_dl.dataset.num_neighboring_features)
     assert(save_per_epoch <= n_epoch)
-
-    n_neighbors = train_dl.dataset.num_neighboring_features
     
     total_train_time = 0
-    
     tracking_metrics = {'compute_time', 'avg_loss', 'accuracy', 'roc_auc', 'pr_auc'}
     train_results = {}
     test_results = {}
-    
-    test_reads_per_site = test_dl.dataset.n_reads_per_site
     
     for epoch in range(1, n_epoch + 1):
         train_results_epoch = train_one_epoch(model, train_dl, device, optimizer, train_criterion, 
@@ -183,7 +177,7 @@ def test(model, pair_dataloader, device, criterion, n_iterations=1) :
             y_true_tmp = []
             y_pred_tmp = []
             for batch in pair_dataloader:
-                y_true = batch.pop('label').to(device).flatten()
+                y_true = batch.pop('y').to(device).flatten()
                 X = {key: val.to(device) for key, val in batch.items()}
                 y_pred = model(X)
                 
@@ -217,6 +211,62 @@ def test(model, pair_dataloader, device, criterion, n_iterations=1) :
     test_results["avg_loss"] = avg_loss
 
     return test_results
+
+
+def validate(model, pair_dataloader, device, n_iterations=1):
+    """
+    extract all the features from a given dataset
+    """
+    model.eval()
+    all_y_true = None
+    all_y_pred = []
+
+    start = time.time()
+    loss_results = {}
+    
+    start = time.time()
+
+    with torch.no_grad():
+        for n in range(n_iterations):
+            y_true_tmp = []
+            y_pred_tmp = []
+            for batch in pair_dataloader:
+                y_true = batch.pop('y').to(device).flatten()
+                X = {key: val.to(device) for key, val in batch.items()}
+                y_pred = model(X)
+                
+                if all_y_true is None:
+                    y_true = y_true.detach().cpu().numpy()
+                    y_true_tmp.extend(y_true)
+
+                y_pred = y_pred.detach().cpu().numpy()
+
+                if len(y_pred.shape) == 1:
+                    y_pred_tmp.extend(y_pred)
+                else:
+                    y_pred_tmp.extend(y_pred[:, 1])
+            if all_y_true is None:
+                all_y_true = y_true_tmp
+            all_y_pred.append(y_pred_tmp)
+    
+    compute_time = time.time() - start
+    y_pred_avg = np.mean(all_y_pred, axis=0)
+    all_y_true = np.array(all_y_true).flatten()
+
+    accuracy_score = get_accuracy(all_y_true, (y_pred_avg.flatten() > 0.5) * 1)
+    roc_auc = get_roc_auc(all_y_true, y_pred_avg)
+    pr_auc = get_pr_auc(all_y_true, y_pred_avg)
+
+    val_results = {}
+
+    val_results['y_pred'] = all_y_pred
+    val_results['y_true'] = all_y_true
+    val_results['compute_time'] = compute_time
+    val_results['accuracy'] = accuracy_score
+    val_results['roc_auc'] = roc_auc
+    val_results['pr_auc'] = pr_auc
+
+    return val_results
 
 
 def inference(model, dl, device, n_iterations=1):

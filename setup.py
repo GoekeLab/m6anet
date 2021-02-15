@@ -30,7 +30,11 @@ setup(
             'toml>=0.10.2'
             ],
     entry_points={'console_scripts': ["m6anet-dataprep={}.scripts.dataprep:main".format(__pkg_name__),
-                                      "m6anet-run_inference={}.scripts.run_inference:main".format(__pkg_name__)]},
+                                      "m6anet-run_inference={}.scripts.run_inference:main".format(__pkg_name__),
+                                      "m6anet-compute_norm_factors={}.scripts.compute_normalization_factors:main".format(__pkg_name__),
+                                      "m6anet-train={}.scripts.train:main".format(__pkg_name__),
+                                      "m6anet-create_cv_split={}.scripts.create_cv_split:main".format(__pkg_name__),
+                                      "m6anet-cross_validate={}.scripts.cross_validate:main".format(__pkg_name__)]},
     classifiers=[
         # Trove classifiers
         # (https://pypi.python.org/pypi?%3Aaction=list_classifiers)
