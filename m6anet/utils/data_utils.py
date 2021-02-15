@@ -40,9 +40,7 @@ class NanopolishDS(Dataset):
         # Inferring total number of neighboring features extracted during dataprep step
 
         kmer, _ = self._load_data(0)
-        
         self.total_neighboring_features = (len(kmer) - 5) // 2
-        
         left_idx = [(self.total_neighboring_features - num_neighboring_features + j) * 3 + i 
                     for j in range(num_neighboring_features) for i in range(3)]
         center_idx = [self.total_neighboring_features * 3 + i for i in range(3)]
@@ -50,7 +48,8 @@ class NanopolishDS(Dataset):
                         for i in range(3)]
 
         self.indices = np.concatenate([left_idx, center_idx, right_idx]).astype('int')
-        
+
+
         if self.mode != 'Inference':
             self.labels = self.data_info["modification_status"].values
 
@@ -93,7 +92,6 @@ class NanopolishDS(Dataset):
         # Repeating kmer to the number of reads sampled
         kmer = self._retrieve_full_sequence(kmer, self.num_neighboring_features)
         kmer = [kmer[i:i+5] for i in range(2 * NUM_NEIGHBORING_FEATURES + 1)]
-        
         features = features[np.random.choice(len(features), self.min_reads, replace=False), :]
         features = features[:, self.indices]
         
@@ -123,13 +121,13 @@ class NanopolishDS(Dataset):
     def compute_norm_factors(self, n_processes):
         if "kmer" not in self.data_info.columns:
             print("k-mer information is not present in column, annotating k-mer information in data info")
-            self.data_info = annotate_kmer_information(data_fpath, self.data_info, n_processes)
+            self.data_info = annotate_kmer_information(self.data_fpath, self.data_info, n_processes)
         kmer_mapping_df = create_kmer_mapping_df(self.data_info)
         norm_dict = create_norm_dict(kmer_mapping_df, self.data_fpath, n_processes)
         return norm_dict
 
     def _retrieve_full_sequence(self, kmer, n_neighboring_features=0):
-        if n_neighboring_features < 5:
+        if n_neighboring_features < self.total_neighboring_features:
             return kmer[self.total_neighboring_features - n_neighboring_features:2 * self.total_neighboring_features + n_neighboring_features]
         else:
             return kmer
