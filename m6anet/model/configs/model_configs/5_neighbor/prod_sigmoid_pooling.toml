@@ -1,0 +1,31 @@
+[[block]]
+block_type = "DeaggregateNanopolish"
+num_neighboring_features = 5
+
+[[block]]
+block_type = "KmerMultipleEmbedding"
+input_channel = 1024
+output_channel = 4
+num_neighboring_features = 5
+
+[[block]]
+block_type = "ConcatenateFeatures"
+
+[[block]]
+block_type = "Linear"
+input_channel = 77
+output_channel = 150
+activation = "relu"
+batch_norm = true
+
+[[block]]
+block_type = "Linear"
+input_channel = 150
+output_channel = 32
+activation = "relu"
+batch_norm = false
+
+[[block]]
+block_type = "SigmoidProdPooling"
+input_channel = 32
+n_reads_per_site = 20

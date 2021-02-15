@@ -5,14 +5,13 @@ from .model_blocks.pooling_blocks import PoolingFilter
 
 class MILModel(Module):
 
-    def __init__(self, model_config, n_reads_per_site):
+    def __init__(self, model_config):
         super(MILModel, self).__init__()
 
         self.model_config = model_config
         self.read_level_encoder = None
         self.pooling_filter = None
         self.decoder = None
-        self.n_reads_per_site = n_reads_per_site
 
         # Building model block by block
         self.build_model()
@@ -27,7 +26,6 @@ class MILModel(Module):
             if isinstance(block_obj, PoolingFilter):
                 self.read_level_encoder = Sequential(*seq_model)
                 self.pooling_filter = block_obj
-                self.pooling_filter.set_num_reads(self.n_reads_per_site)
                 seq_model = []
             else:
                 seq_model.append(block_obj)

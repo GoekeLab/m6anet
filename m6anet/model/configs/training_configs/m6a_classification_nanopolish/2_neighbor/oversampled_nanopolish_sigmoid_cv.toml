@@ -1,0 +1,47 @@
+config_name = "nanopolish_undersampled"
+
+[train_loss_function]
+loss_function_type = "binary_cross_entropy_loss"
+
+[test_loss_function]
+loss_function_type = "binary_cross_entropy_loss"
+
+[dataset]
+data_path = "/home/christopher/hct116_mad_normed_site_info/site_info.csv.tar.gz"
+    
+    [dataset.transform_function]
+    transform_name = "identity_transform"
+
+    [dataset.train]
+    dataset_class = "NanopolishDSEmbedding"
+    norm_path = "/home/christopher/hct116_mad_normed_site_info/norm_dict_nanopolish.joblib"
+    n_reads_per_site = 20
+    num_neighboring_features = 2
+
+    [dataset.test]
+    dataset_class = "NanopolishDSEmbedding"
+    norm_path = "/home/christopher/hct116_mad_normed_site_info/norm_dict_nanopolish.joblib"
+    n_reads_per_site = 20
+    num_neighboring_features = 2
+
+    [dataset.val]
+    dataset_class = "NanopolishDSEmbedding"
+    norm_path = "/home/christopher/hct116_mad_normed_site_info/norm_dict_nanopolish.joblib"
+    n_reads_per_site = 20
+    num_neighboring_features = 2
+    
+[dataloader]
+    [dataloader.collate_fn]
+    collate_fn = "kmer_collate"
+
+    [dataloader.train]
+    batch_size = 256
+    sampler = "ImbalanceOverSampler"
+
+    [dataloader.test]
+    batch_size = 256
+    shuffle = false
+
+    [dataloader.val]
+    batch_size = 256
+    shuffle = false
