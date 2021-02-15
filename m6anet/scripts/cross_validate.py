@@ -35,7 +35,6 @@ def argparser():
     parser.add_argument("--save_per_epoch", default=10, type=int)
     parser.add_argument("--weight_decay", dest="weight_decay", default=0, type=float)
     parser.add_argument("--num_iterations", default=1, type=int)
-    parser.add_argument("--compute_norm_factors", default=False, action='store_true')
     return parser
 
 
@@ -57,7 +56,6 @@ def cross_validate(args):
     cv = args.cv
     weight_decay = args.weight_decay
     n_iterations = args.num_iterations
-    compute_norm_factors = args.compute_norm_factors
 
     model_config = toml.load(args.model_config)
     train_config = toml.load(args.train_config)
@@ -84,23 +82,24 @@ def cross_validate(args):
 
     final_val_df = {}
     selection_criterions = ['avg_loss', 'roc_auc', 'pr_auc']
+    columns = ["transcript_id", "transcript_position", "n_reads", "chr", "gene_id", "genomic_position", "kmer", "modification_status", "probability_modified"]
 
     for fold_num in range(1, cv + 1):
-        fold_dir = os.path.join(cv_dir, str(fold_num))
+        fold_dir_save = os.path.join(save_dir, str(fold_num))
+        
+        if not os.path.exists(fold_dir_save):
+            os.mkdir(fold_dir_save)
 
         print("Begin running cross validation for fold number {} for a total of {} folds".format( fold_num, cv))
 
         model_config_copy, train_config_copy = deepcopy(model_config), deepcopy(train_config)
+        fold_dir = os.path.join(cv_dir, str(fold_num))
         train_config_copy["dataset"]["site_info"] = fold_dir
+        train_config_copy["dataset"]["norm_path"] = os.path.join(fold_dir, "norm_dict.joblib")
 
         model = MILModel(model_config_copy).to(device)
         train_dl, test_dl, val_dl = build_dataloader(train_config_copy, num_workers)
 
-        if compute_norm_factors:
-            train_dl.dataset.compute_norm_factors(num_workers)
-            test_dl.dataset.norm_dict = train_dl.dataset.norm_dict
-            val_dl.dataset.norm_dict = train_dl.dataset.norm_dict
-        raise ValueError()
         optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
 
         train_criterion = build_train_loss_function(train_config_copy['train_loss_function'])
@@ -108,11 +107,11 @@ def cross_validate(args):
 
         train_results, test_results = train(model, train_dl, test_dl, optimizer, n_epoch, device, 
                                             train_criterion, test_criterion,
-                                            save_dir=fold_dir, scheduler=lr_scheduler,
+                                            save_dir=fold_dir_save, scheduler=lr_scheduler,
                                             save_per_epoch=save_per_epoch)
 
-        joblib.dump(train_results, os.path.join(fold_dir, "train_results.joblib"))      
-        joblib.dump(test_results, os.path.join(fold_dir, "test_results.joblib"))   
+        joblib.dump(train_results, os.path.join(fold_dir_save, "train_results.joblib"))      
+        joblib.dump(test_results, os.path.join(fold_dir_save, "test_results.joblib"))   
 
         for selection_criterion in selection_criterions:
             test_loss = [test_results[selection_criterion][i] for i in range (0, len(test_results[selection_criterion]), save_per_epoch)]
@@ -122,7 +121,7 @@ def cross_validate(args):
             else:
                 best_model = (np.argmax(test_loss) + 1) * save_per_epoch
 
-            model.load_state_dict(torch.load(os.path.join(fold_dir, "model_states", str(best_model), "model_states.pt")))
+            model.load_state_dict(torch.load(os.path.join(fold_dir_save, "model_states", str(best_model), "model_states.pt")))
             val_results = validate(model, val_dl, device, n_iterations)
             print("Compute time: {compute_time:.3f} \t "
                   "Val Accuracy: {accuracy:.3f} \t "
@@ -133,9 +132,10 @@ def cross_validate(args):
                                                     pr_auc=val_results["pr_auc"]))
             print("=====================================")            
 
-            joblib.dump(val_results, os.path.join(fold_dir, "val_results_{}.joblib".format(selection_criterion)))   
-            val_df = val_dl.dataset.site_df
-            val_df.loc[:, "site_probability"] = np.mean(val_results["y_pred"], axis=0)
+            joblib.dump(val_results, os.path.join(fold_dir_save, "val_results_{}.joblib".format(selection_criterion)))   
+            val_df = deepcopy(val_dl.dataset.data_info)
+            val_df.loc[:, "probability_modified"] = np.mean(val_results["y_pred"], axis=0)
+            val_df = val_df[columns]
             
             if selection_criterion not in final_val_df:
                 final_val_df[selection_criterion] = [val_df]

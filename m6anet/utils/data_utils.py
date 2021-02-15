@@ -14,7 +14,7 @@ from itertools import product
 class NanopolishDS(Dataset):
 
     def __init__(self, root_dir, min_reads, norm_path=None, site_info=None,
-                 num_neighboring_features=1, mode='Inference'):
+                 num_neighboring_features=1, mode='Inference', n_processes=1):
         allowed_mode = ('Train', 'Test', 'Val', 'Inference')
         
         if mode not in allowed_mode:
@@ -29,7 +29,7 @@ class NanopolishDS(Dataset):
         if norm_path is not None:
             self.norm_dict = joblib.load(norm_path)
         else:
-            self.norm_dict = None
+            self.norm_dict = self.compute_norm_factors(n_processes)
 
         if num_neighboring_features > 5:
             raise ValueError("Invalid neighboring features number {}".format(num_neighboring_features))
@@ -126,7 +126,7 @@ class NanopolishDS(Dataset):
             self.data_info = annotate_kmer_information(data_fpath, self.data_info, n_processes)
         kmer_mapping_df = create_kmer_mapping_df(self.data_info)
         norm_dict = create_norm_dict(kmer_mapping_df, self.data_fpath, n_processes)
-        self.norm_dict = norm_dict
+        return norm_dict
 
     def _retrieve_full_sequence(self, kmer, n_neighboring_features=0):
         if n_neighboring_features < 5:

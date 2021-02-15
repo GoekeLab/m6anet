@@ -14,10 +14,10 @@ from ..utils.data_utils import NanopolishDS, inference_collate
 from ..utils.training_utils import inference
 from torch.utils.data import DataLoader
 
-
-NORM_PATH = "../m6anet/model/norm_factors/norm_dict.joblib"
-DEFAULT_MODEL_CONFIG = "../m6anet/model/configs/model_configs/1_neighbor/prod_pooling_summary_stats.toml"
-DEFAULT_MODEL_WEIGHTS = "../m6anet/model/model_states/summary_stats_pooling_pr_auc.pt"
+ROOT_PATH = os.path.dirname(os.path.dirname(__file__))
+NORM_PATH = os.path.join(ROOT_PATH, "model/norm_factors/norm_dict.joblib")
+DEFAULT_MODEL_CONFIG =  os.path.join(ROOT_PATH, "model/configs/model_configs/1_neighbor/prod_pooling_summary_stats.toml")
+DEFAULT_MODEL_WEIGHTS = os.path.join(ROOT_PATH, "model/model_states/summary_stats_pooling_pr_auc.pt")
 MIN_READS = 20
 
 
