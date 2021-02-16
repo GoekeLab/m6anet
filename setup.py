@@ -27,7 +27,8 @@ setup(
             'scipy>=1.4.1',
             'ujson',
             'torch>=1.6.0',
-            'toml>=0.10.2'
+            'toml>=0.10.2',
+            'tqdm'
             ],
     entry_points={'console_scripts': ["m6anet-dataprep={}.scripts.dataprep:main".format(__pkg_name__),
                                       "m6anet-run_inference={}.scripts.run_inference:main".format(__pkg_name__),
