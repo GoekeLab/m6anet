@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 import os,re
 import multiprocessing 
-import h5py
 import csv
 import ujson
 from pyensembl import EnsemblRelease
@@ -26,30 +25,14 @@ def get_args():
 
     # Required arguments
     required.add_argument('--eventalign', dest='eventalign', help='eventalign filepath, the output from nanopolish.',required=True)
-    required.add_argument('--summary', dest='summary', help='eventalign summary filepath, the output from nanopolish.',required=True)
     required.add_argument('--out_dir', dest='out_dir', help='output directory.',required=True)
     
-    # Optional
-    # Use ensembl db
-    optional.add_argument('--ensembl', dest='ensembl', help='ensembl version for gene-transcript mapping.',type=int, default=91)
-    optional.add_argument('--species', dest='species', help='species for ensembl gene-transcript mapping.', default='homo_sapiens')
-
-    # Use customised db
-    # These arguments will be passed to Genome from pyensembl
-    optional.add_argument('--customised_genome', dest='customised_genome', help='customised_genome.',default=False,action='store_true')
-    optional.add_argument('--reference_name', dest='reference_name', help='reference_name.',type=str)
-    optional.add_argument('--annotation_name', dest='annotation_name', help='annotation_name.',type=str)
-    optional.add_argument('--gtf_path_or_url', dest='gtf_path_or_url', help='gtf_path_or_url.',type=str)
-    optional.add_argument('--transcript_fasta_paths_or_urls', dest='transcript_fasta_paths_or_urls', help='transcript_fasta_paths_or_urls.',type=str)
-
-
     # parser.add_argument('--features', dest='features', help='Signal features to extract.',type=list,default=['norm_mean'])
-    optional.add_argument('--genome', dest='genome', help='to run on Genomic coordinates. Without this argument, the program will run on transcriptomic coordinates',default=False,action='store_true') 
     optional.add_argument('--n_processes', dest='n_processes', help='number of processes to run.',type=int, default=1)
     optional.add_argument('--chunk_size', dest='chunk_size', help='number of lines from nanopolish eventalign.txt for processing.',type=int, default=1000000)
     optional.add_argument('--readcount_min', dest='readcount_min', help='minimum read counts per gene.',type=int, default=1)
     optional.add_argument('--readcount_max', dest='readcount_max', help='maximum read counts per gene.',type=int, default=1000)
-    optional.add_argument('--resume', dest='resume', help='with this argument, the program will resume from the previous run.',default=False,action='store_true') #todo
+    optional.add_argument('--index', dest='index', help='with this argument the program will index eventalign.txt first.',default=False,action='store_true') #todo
 
     parser._action_groups.append(optional)
     return parser.parse_args()
@@ -122,7 +105,7 @@ def index(eventalign_result,pos_start,out_paths,locks):
            f_index.write('%s,%d,%d,%d\n' %(transcript_id,read_index,pos_start,pos_end))
            pos_start = pos_end
 
-def parallel_index(eventalign_filepath,summary_filepath,chunk_size,out_dir,n_processes,resume):
+def parallel_index(eventalign_filepath,chunk_size,out_dir,n_processes):
     # Create output paths and locks.
     out_paths,locks = dict(),dict()
     for out_filetype in ['index']:
@@ -130,13 +113,8 @@ def parallel_index(eventalign_filepath,summary_filepath,chunk_size,out_dir,n_pro
         locks[out_filetype] = multiprocessing.Lock()
     # TO DO: resume functionality for index creation
         
-    read_names_done = []
-    if resume and os.path.exists(out_paths['log']):
-        read_names_done = [line.rstrip('\n') for line in open(out_paths['log'],'r')]
-    else:
-        # Create empty files.
-        with open(out_paths['index'],'w') as f:
-            f.write('transcript_id,read_index,pos_start,pos_end\n') # header
+    with open(out_paths['index'],'w') as f:
+        f.write('transcript_id,read_index,pos_start,pos_end\n') # header
 
 
     # Create communication queues.
@@ -229,7 +207,7 @@ def combine(events_str):
         return np.array([])
 
 
-def parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min,readcount_max,resume):
+def parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min,readcount_max):
     
     # Create output paths and locks.
     out_paths,locks = dict(),dict()
@@ -239,19 +217,16 @@ def parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min
                 
     # Writing the starting of the files.
     gene_ids_done = []
-    if resume and os.path.exists(out_paths['index']):
-        df_index = pd.read_csv(out_paths['index'],sep=',')
-        gene_ids_done = list(df_index['idx'].unique())
-    else:
-        # with open(out_paths['json'],'w') as f:
-        #     f.write('{\n')
-        #     f.write('"genes":{')
-        open(out_paths['json'],'w').close()
-        with open(out_paths['index'],'w') as f:
-            f.write('transcript_id,transcript_position,start,end\n') # header
-        with open(out_paths['readcount'],'w') as f:
-            f.write('transcript_id,transcript_position,n_reads\n') # header
-        open(out_paths['log'],'w').close()
+
+    # with open(out_paths['json'],'w') as f:
+    #     f.write('{\n')
+    #     f.write('"genes":{')
+    open(out_paths['json'],'w').close()
+    with open(out_paths['index'],'w') as f:
+        f.write('transcript_id,transcript_position,start,end\n') # header
+    with open(out_paths['readcount'],'w') as f:
+        f.write('transcript_id,transcript_position,n_reads\n') # header
+    open(out_paths['log'],'w').close()
 
     # Create communication queues.
     task_queue = multiprocessing.JoinableQueue(maxsize=n_processes * 2)
@@ -326,7 +301,6 @@ def preprocess_tx(tx_id,data_dict,out_paths,locks):  # todo
     
     features_arrays = []
     reference_kmer_arrays = []
-    transcript_id_arrays = []
     transcriptomic_positions_arrays = []
 
     for read_id,events_per_read in data_dict.items(): 
@@ -335,23 +309,19 @@ def preprocess_tx(tx_id,data_dict,out_paths,locks):  # todo
         for event_per_read in events_per_read:
             features_arrays.append(event_per_read[0])
             reference_kmer_arrays.append([combine_sequence(kmer) for kmer in event_per_read[1]])
-            transcript_id_arrays.append(event_per_read[2])
             transcriptomic_positions_arrays.append(event_per_read[3])
-
 
     if len(features_arrays) == 0:
         return
     else:
         features_arrays = np.concatenate(features_arrays)
         reference_kmer_arrays = np.concatenate(reference_kmer_arrays)
-        transcript_id_arrays = np.concatenate(transcript_id_arrays)
         transcriptomic_positions_arrays = np.concatenate(transcriptomic_positions_arrays)
-        assert(len(features_arrays) == len(reference_kmer_arrays) == len(transcript_id_arrays) == len(transcriptomic_positions_arrays))
+        assert(len(features_arrays) == len(reference_kmer_arrays) == len(transcriptomic_positions_arrays))
     # Sort and split
 
-    idx_sorted = np.lexsort((reference_kmer_arrays,transcriptomic_positions_arrays,transcript_id_arrays))
-    key_tuples, index = np.unique(list(zip(transcript_id_arrays[idx_sorted],transcriptomic_positions_arrays[idx_sorted],
-                                           reference_kmer_arrays[idx_sorted])),return_index = True,axis=0) #'chr',
+    idx_sorted = np.argsort(transcriptomic_positions_arrays)
+    positions, index = np.unique(transcriptomic_positions_arrays[idx_sorted], return_index = True,axis=0) #'chr',
     features_arrays = np.split(features_arrays[idx_sorted], index[1:])
     reference_kmer_arrays = np.split(reference_kmer_arrays[idx_sorted], index[1:])
 
@@ -361,13 +331,13 @@ def preprocess_tx(tx_id,data_dict,out_paths,locks):  # todo
 
 
     # for each position, make it ready for json dump
-    for key_tuple, features_array, reference_kmer_array in zip(key_tuples, features_arrays, reference_kmer_arrays):
-        _,position,kmer = key_tuple
-        position = int(position)
-        kmer = kmer
+    for position, features_array, reference_kmer_array in zip(positions, features_arrays, reference_kmer_arrays):
+        kmer = set(reference_kmer_array)
+        assert(len(kmer) == 1)
         if (len(set(reference_kmer_array)) == 1) and ('XXXXX' in set(reference_kmer_array)) or (len(features_array) == 0):
             continue
-        data[position] = {kmer: features_array.tolist()}
+
+        data[int(position)] = {kmer.pop(): features_array.tolist()}
 
     # write to file.
     log_str = '%s: Data preparation ... Done.' %(tx_id)
@@ -401,36 +371,19 @@ def main():
     #
     n_processes = args.n_processes        
     eventalign_filepath = args.eventalign
-    summary_filepath = args.summary
     chunk_size = args.chunk_size
     out_dir = args.out_dir
-    ensembl_version = args.ensembl
-    ensembl_species = args.species
     readcount_min = args.readcount_min    
     readcount_max = args.readcount_max
-    resume = args.resume
-    genome = args.genome
-
-    customised_genome = args.customised_genome
-    if customised_genome and (None in [args.reference_name,args.annotation_name,args.gtf_path_or_url,args.transcript_fasta_paths_or_urls]):
-        print('If you have your own customised genome not in Ensembl, please provide the following')
-        print('- reference_name')
-        print('- annotation_name')
-        print('- gtf_path_or_url')
-        print('- transcript_fasta_paths_or_urls')
-    else:
-        reference_name = args.reference_name
-        annotation_name = args.annotation_name
-        gtf_path_or_url = args.gtf_path_or_url
-        transcript_fasta_paths_or_urls = args.transcript_fasta_paths_or_urls
-        
+    index = args.index
     misc.makedirs(out_dir) #todo: check every level.
     
     # (1) For each read, combine multiple events aligned to the same positions, the results from nanopolish eventalign, into a single event per position.
     eventalign_log_filepath = os.path.join(out_dir,'eventalign.log')
     # if not helper.is_successful(eventalign_log_filepath) and not resume: #some slight hack to skip index creation again after it is successful
-    parallel_index(eventalign_filepath,summary_filepath,chunk_size,out_dir,n_processes,resume)
-    parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min,readcount_max,False) #TO DO: RESUME FUNCTION
+    if index:
+        parallel_index(eventalign_filepath,chunk_size,out_dir,n_processes)
+    parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min,readcount_max) #TO DO: RESUME FUNCTION
 
 if __name__ == '__main__':
     main()

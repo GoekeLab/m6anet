@@ -25,7 +25,7 @@ def weighted_cross_entropy_loss(model, X, y_true):
 
 def binary_cross_entropy_loss(model, X, y_true):
     y_pred = model(X)
-    loss = BCELoss()(y_pred, y_true.float())
+    loss = BCELoss()(y_pred.flatten(), y_true.float())
     return create_train_results(y_pred, loss)
 
 

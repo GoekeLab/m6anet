@@ -5,7 +5,6 @@ import torch
 import json
 import joblib
 from ..scripts.compute_normalization_factors import annotate_kmer_information, create_kmer_mapping_df, create_norm_dict
-from ..scripts.constants import NUM_NEIGHBORING_FEATURES, KMER_TO_INT
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data._utils.collate import default_collate
 from itertools import product
@@ -14,7 +13,8 @@ from itertools import product
 class NanopolishDS(Dataset):
 
     def __init__(self, root_dir, min_reads, norm_path=None, site_info=None,
-                 num_neighboring_features=1, mode='Inference', n_processes=1):
+                 num_neighboring_features=1, mode='Inference', site_mode=False,
+                 n_processes=1):
         allowed_mode = ('Train', 'Test', 'Val', 'Inference')
         
         if mode not in allowed_mode:
@@ -25,7 +25,8 @@ class NanopolishDS(Dataset):
         self.data_info = self.initialize_data_info(root_dir, min_reads)
         self.data_fpath = os.path.join(root_dir, "data.json")
         self.min_reads = min_reads
-    
+        self.site_mode = site_mode
+
         if norm_path is not None:
             self.norm_dict = joblib.load(norm_path)
         else:
@@ -36,6 +37,14 @@ class NanopolishDS(Dataset):
 
         self.num_neighboring_features = num_neighboring_features
 
+        center_motifs = [['A', 'G', 'T'], ['G', 'A'], ['A'], ['C'], ['A', 'C', 'T']]
+        flanking_motifs = [['G', 'A', 'C', 'T'] for i in range(self.num_neighboring_features)]
+        all_kmers = list(["".join(x) for x in product(*(flanking_motifs + center_motifs + flanking_motifs))])
+        
+        self.all_kmers = np.unique(np.array(list(map(lambda x: [x[i:i+5] for i in range(len(x) -4)], 
+                                            all_kmers))).flatten())
+        self.kmer_to_int = {self.all_kmers[i]: i for i in range(len(self.all_kmers))}
+        self.int_to_kmer =  {i: self.all_kmers[i] for i in range(len(self.all_kmers))}
 
         # Inferring total number of neighboring features extracted during dataprep step
 
@@ -48,7 +57,6 @@ class NanopolishDS(Dataset):
                         for i in range(3)]
 
         self.indices = np.concatenate([left_idx, center_idx, right_idx]).astype('int')
-
 
         if self.mode != 'Inference':
             self.labels = self.data_info["modification_status"].values
@@ -91,7 +99,8 @@ class NanopolishDS(Dataset):
 
         # Repeating kmer to the number of reads sampled
         kmer = self._retrieve_full_sequence(kmer, self.num_neighboring_features)
-        kmer = [kmer[i:i+5] for i in range(2 * NUM_NEIGHBORING_FEATURES + 1)]
+        kmer = [kmer[i:i+5] for i in range(2 * self.num_neighboring_features + 1)]
+
         features = features[np.random.choice(len(features), self.min_reads, replace=False), :]
         features = features[:, self.indices]
         
@@ -101,10 +110,12 @@ class NanopolishDS(Dataset):
         else:
             features = torch.Tensor((features))
 
-        kmer = np.repeat(np.array([KMER_TO_INT[kmer] for kmer in kmer])\
-                    .reshape(-1, 2 * NUM_NEIGHBORING_FEATURES + 1), self.min_reads, axis=0)
-        kmer = torch.Tensor(kmer)
-
+        if not self.site_mode:
+            kmer = np.repeat(np.array([self.kmer_to_int[kmer] for kmer in kmer])\
+                        .reshape(-1, 2 * self.num_neighboring_features + 1), self.min_reads, axis=0)
+            kmer = torch.Tensor(kmer)
+        else:
+            kmer = torch.LongTensor([self.kmer_to_int[kmer] for kmer in kmer])
         if self.mode == 'Inference':
             return features, kmer
         else:
