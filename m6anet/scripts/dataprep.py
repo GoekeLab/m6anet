@@ -13,7 +13,7 @@ from itertools import groupby
 from io import StringIO
 
 from . import helper
-from .constants import M6A_KMERS, KMER_TO_INT, NUM_NEIGHBORING_FEATURES
+from .constants import M6A_KMERS, NUM_NEIGHBORING_FEATURES
 from ..utils import misc
 
 
@@ -33,6 +33,7 @@ def get_args():
     optional.add_argument('--readcount_min', dest='readcount_min', help='minimum read counts per gene.',type=int, default=1)
     optional.add_argument('--readcount_max', dest='readcount_max', help='maximum read counts per gene.',type=int, default=1000)
     optional.add_argument('--index', dest='index', help='with this argument the program will index eventalign.txt first.',default=False,action='store_true') #todo
+    optional.add_argument('--n_neighbors', dest='n_neighbors', help='number of neighboring features to extract.',type=int, default=NUM_NEIGHBORING_FEATURES)
 
     parser._action_groups.append(optional)
     return parser.parse_args()
@@ -207,7 +208,7 @@ def combine(events_str):
         return np.array([])
 
 
-def parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min,readcount_max):
+def parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min,readcount_max, n_neighbors):
     
     # Create output paths and locks.
     out_paths,locks = dict(),dict()
@@ -256,7 +257,7 @@ def parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min
                 if readcount > readcount_max:
                     break
             if readcount>=readcount_min:
-                task_queue.put((tx_id,data_dict,out_paths)) # Blocked if necessary until a free slot is available. 
+                task_queue.put((tx_id,data_dict,n_neighbors,out_paths)) # Blocked if necessary until a free slot is available. 
 
 
     # Put the stop task into task_queue.
@@ -269,7 +270,7 @@ def parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min
 ##        f.write('Total %d genes.\n' %len(gene_ids_processed))
 ##        f.write(helper.decor_message('successfully finished'))
 
-def preprocess_tx(tx_id,data_dict,out_paths,locks):  # todo
+def preprocess_tx(tx_id,data_dict,n_neighbors,out_paths,locks):  # todo
     """
     Convert transcriptomic to genomic coordinates for a gene.
     
@@ -289,12 +290,6 @@ def preprocess_tx(tx_id,data_dict,out_paths,locks):  # todo
     
     # features = ['read_id','transcript_id','transcriptomic_position','reference_kmer','norm_mean','start_idx','end_idx'] # columns in the eventalign file per read.
 
-    events = []
-    condition_labels = []
-    run_labels = []
-    read_ids = []
-    transcriptomic_coordinates = []
-    
     # Concatenate
     if len(data_dict) == 0:
         return
@@ -305,7 +300,7 @@ def preprocess_tx(tx_id,data_dict,out_paths,locks):  # todo
 
     for read_id,events_per_read in data_dict.items(): 
         # print(read_id)
-        events_per_read = filter_events(events_per_read, NUM_NEIGHBORING_FEATURES, M6A_KMERS)
+        events_per_read = filter_events(events_per_read, n_neighbors, M6A_KMERS)
         for event_per_read in events_per_read:
             features_arrays.append(event_per_read[0])
             reference_kmer_arrays.append([combine_sequence(kmer) for kmer in event_per_read[1]])
@@ -376,6 +371,7 @@ def main():
     readcount_min = args.readcount_min    
     readcount_max = args.readcount_max
     index = args.index
+    n_neighbors = args.n_neighbors
     misc.makedirs(out_dir) #todo: check every level.
     
     # (1) For each read, combine multiple events aligned to the same positions, the results from nanopolish eventalign, into a single event per position.
@@ -383,7 +379,7 @@ def main():
     # if not helper.is_successful(eventalign_log_filepath) and not resume: #some slight hack to skip index creation again after it is successful
     if index:
         parallel_index(eventalign_filepath,chunk_size,out_dir,n_processes)
-    parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min,readcount_max) #TO DO: RESUME FUNCTION
+    parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min,readcount_max, n_neighbors) #TO DO: RESUME FUNCTION
 
 if __name__ == '__main__':
     main()
