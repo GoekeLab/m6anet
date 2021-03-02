@@ -8,7 +8,7 @@ loss_function_type = "binary_cross_entropy_loss"
 root_dir = "/home/christopher/hct116_dataprep_5_neighbors"
 min_reads = 20
 norm_path = "/home/christopher/hct116_dataprep_5_neighbors/norm_dict_nanopolish.joblib"   
-num_neighboring_features = 1
+num_neighboring_features = 4
 site_mode = true
 
 [dataloader]

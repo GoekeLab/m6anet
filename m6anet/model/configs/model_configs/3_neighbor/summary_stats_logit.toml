@@ -1,0 +1,22 @@
+model = "m6ANet_simple_summary_stats"
+
+[[block]]
+block_type = "SummaryStatsAggregator"
+input_channel = 21
+n_reads_per_site = 20
+
+[[block]]
+block_type = "KmerMultipleEmbedding"
+input_channel = 588
+output_channel = 4
+num_neighboring_features = 3
+
+[[block]]
+block_type = "ConcatenateFeatures"
+
+[[block]]
+block_type = "Linear"
+input_channel = 133
+output_channel = 1
+activation = "sigmoid"
+batch_norm = false
