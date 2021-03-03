@@ -9,4 +9,4 @@ def cross_entropy_loss(y_pred, y_true):
 
 
 def binary_cross_entropy_loss(y_pred, y_true):
-    return BCELoss()(y_pred, y_true.float())
+    return BCELoss()(y_pred.flatten(), y_true.float())

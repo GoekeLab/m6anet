@@ -62,9 +62,10 @@ def train_one_epoch(model, pair_dataloader, device, optimizer, criterion, schedu
             for key in loss_results.keys():
                 loss_results[key].append(train_results[key].detach().cpu().item())  
 
-        if len(y_pred.shape) == 1:
-            all_y_pred.extend(y_pred)
+        if (len(y_pred.shape) == 1) or (y_pred.shape[1] == 1):
+            all_y_pred.extend(y_pred.flatten())
             acc_list.append(get_accuracy(y_true.flatten(), (y_pred.flatten() > 0.5) * 1))
+
         else:
             all_y_pred.extend(y_pred[:, 1])
             acc_list.append(get_accuracy(y_true.flatten(), y_pred.argmax(-1)))
@@ -187,8 +188,8 @@ def test(model, pair_dataloader, device, criterion, n_iterations=1) :
 
                 y_pred = y_pred.detach().cpu().numpy()
 
-                if len(y_pred.shape) == 1:
-                    y_pred_tmp.extend(y_pred)
+                if (len(y_pred.shape) == 1) or (y_pred.shape[1] == 1):
+                    y_pred_tmp.extend(y_pred.flatten())
                 else:
                     y_pred_tmp.extend(y_pred[:, 1])
             if all_y_true is None:
@@ -241,8 +242,8 @@ def validate(model, pair_dataloader, device, n_iterations=1):
 
                 y_pred = y_pred.detach().cpu().numpy()
 
-                if len(y_pred.shape) == 1:
-                    y_pred_tmp.extend(y_pred)
+                if (len(y_pred.shape) == 1) or (y_pred.shape[1] == 1):
+                    y_pred_tmp.extend(y_pred.flatten())
                 else:
                     y_pred_tmp.extend(y_pred[:, 1])
             if all_y_true is None:
@@ -282,8 +283,8 @@ def inference(model, dl, device, n_iterations=1):
                 X = {key: val.to(device) for key, val in batch.items()}
                 y_pred = model(X)
                 y_pred = y_pred.detach().cpu().numpy()
-                if len(y_pred.shape) == 1:
-                    y_pred_tmp.extend(y_pred)
+                if (len(y_pred.shape) == 1) or (y_pred.shape[1] == 1):
+                    y_pred_tmp.extend(y_pred.flatten())
                 else:
                     y_pred_tmp.extend(y_pred[:, 1])
 

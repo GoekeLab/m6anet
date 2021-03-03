@@ -24,13 +24,17 @@ class MILModel(Module):
             block_obj = self._build_block(block_type, **block)
         
             if isinstance(block_obj, PoolingFilter):
-                self.read_level_encoder = Sequential(*seq_model)
+                if len(seq_model) > 0:
+                    self.read_level_encoder = Sequential(*seq_model)
+                else:
+                    self.read_level_encoder = None
+
                 self.pooling_filter = block_obj
                 seq_model = []
             else:
                 seq_model.append(block_obj)
         
-        if self.read_level_encoder is None:
+        if (self.read_level_encoder is None) and (self.pooling_filter is None):
             self.read_level_encoder = Sequential(*seq_model)
             self.pooling_filter = Identity()
             self.decoder = Identity()
@@ -46,7 +50,10 @@ class MILModel(Module):
         return block_obj(**kwargs)
 
     def get_read_representation(self, x):
-        return self.read_level_encoder(x)
+        if self.read_level_encoder is None:
+            return x
+        else:
+            return self.read_level_encoder(x)
     
     def get_read_probability(self, x):
         read_representation = self.get_read_representation(x)

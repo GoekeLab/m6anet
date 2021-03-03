@@ -18,7 +18,6 @@ num_neighboring_features=1
 [dataloader]
     [dataloader.train]
     batch_size = 256
-    sampler = "ImbalanceOverSampler"
 
     [dataloader.test]
     batch_size = 256

@@ -24,7 +24,7 @@ class SummaryStatsAggregator(PoolingFilter):
         self.input_channel = input_channel
         self.n_reads_per_site = n_reads_per_site
 
-    def forward(self, x):
+    def aggregate(self, x):
         x = x.view(-1, self.n_reads_per_site, self.input_channel)
         mean = torch.mean(x, axis=1)
         var = torch.var(x, axis=1)
@@ -33,6 +33,18 @@ class SummaryStatsAggregator(PoolingFilter):
         med_ = torch.median(x, axis=1).values
         x = torch.cat([mean, var, max_, min_, med_], axis=1)
         return x
+
+    def forward(self, x):
+        is_dict = isinstance(x, dict)
+        
+        if is_dict:
+            x, kmer = x['X'], x['kmer']
+        x = self.aggregate(x)
+
+        if is_dict:
+            return {'X': x, 'kmer': kmer}
+        else:
+            return x
 
 
 class Attention(PoolingFilter):

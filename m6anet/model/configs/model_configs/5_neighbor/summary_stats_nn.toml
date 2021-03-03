@@ -1,0 +1,37 @@
+model = "m6ANet_simple_summary_stats"
+
+[[block]]
+block_type = "SummaryStatsAggregator"
+input_channel = 33
+n_reads_per_site = 20
+
+
+[[block]]
+block_type = "KmerMultipleEmbedding"
+input_channel = 1024
+output_channel = 4
+num_neighboring_features = 5
+
+[[block]]
+block_type = "ConcatenateFeatures"
+
+[[block]]
+block_type = "Linear"
+input_channel = 209
+output_channel = 256
+activation = "relu"
+batch_norm = true
+
+[[block]]
+block_type = "Linear"
+input_channel = 256
+output_channel = 32
+activation = "relu"
+batch_norm = false
+
+[[block]]
+block_type = "Linear"
+input_channel = 32
+output_channel = 1
+activation = "sigmoid"
+batch_norm = false
