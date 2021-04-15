@@ -7,7 +7,7 @@ lambda_2 = 1
 lambda_3 = 1
 
 [test_loss_function]
-loss_function_type = "binary_cross_entropy_loss"
+loss_function_type = "weighted_binary_cross_entropy_loss"
 
 [dataset]
 root_dir = "/home/christopher/hct116_dataprep_5_neighbors"

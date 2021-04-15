@@ -94,35 +94,31 @@ class NanopolishDS(Dataset):
         return kmer, np.array(features)
 
     def __getitem__(self, idx):
-        try:
-            kmer, features = self._load_data(idx)
+        kmer, features = self._load_data(idx)
+        # Repeating kmer to the number of reads sampled
+        kmer = self._retrieve_full_sequence(kmer, self.num_neighboring_features)
+        kmer = [kmer[i:i+5] for i in range(2 * self.num_neighboring_features + 1)]
 
-            # Repeating kmer to the number of reads sampled
-            kmer = self._retrieve_full_sequence(kmer, self.num_neighboring_features)
-            kmer = [kmer[i:i+5] for i in range(2 * self.num_neighboring_features + 1)]
+        features = features[np.random.choice(len(features), self.min_reads, replace=False), :]
+        features = features[:, self.indices]
+        
+        if self.norm_dict is not None:
+            mean, std = self.get_norm_factor(kmer)
+            features = torch.Tensor((features - mean) / std)
+        else:
+            features = torch.Tensor((features))
 
-            features = features[np.random.choice(len(features), self.min_reads, replace=False), :]
-            features = features[:, self.indices]
-            
-            if self.norm_dict is not None:
-                mean, std = self.get_norm_factor(kmer)
-                features = torch.Tensor((features - mean) / std)
-            else:
-                features = torch.Tensor((features))
+        if not self.site_mode:
+            kmer = np.repeat(np.array([self.kmer_to_int[kmer] for kmer in kmer])\
+                        .reshape(-1, 2 * self.num_neighboring_features + 1), self.min_reads, axis=0)
+            kmer = torch.Tensor(kmer)
+        else:
+            kmer = torch.LongTensor([self.kmer_to_int[kmer] for kmer in kmer])
+        if self.mode == 'Inference':
+            return features, kmer
+        else:
+            return features, kmer, self.data_info.iloc[idx]["modification_status"]
 
-            if not self.site_mode:
-                kmer = np.repeat(np.array([self.kmer_to_int[kmer] for kmer in kmer])\
-                            .reshape(-1, 2 * self.num_neighboring_features + 1), self.min_reads, axis=0)
-                kmer = torch.Tensor(kmer)
-            else:
-                kmer = torch.LongTensor([self.kmer_to_int[kmer] for kmer in kmer])
-            if self.mode == 'Inference':
-                return features, kmer
-            else:
-                return features, kmer, self.data_info.iloc[idx]["modification_status"]
-        except Exception:
-            print(idx)
-    
     def get_norm_factor(self, list_of_kmers):
         norm_mean, norm_std = [], []
         for kmer in list_of_kmers:
@@ -147,6 +143,25 @@ class NanopolishDS(Dataset):
 
     def _retrieve_sequence(self, sequence, n_neighboring_features=0):
         return [sequence[i : i+5] for i in range(len(sequence) - 4)]
+
+
+class ImbalanceUnderSampler(torch.utils.data.Sampler):
+
+    def __init__(self, data_source):
+        self.data_source = data_source
+        self.class_counts = np.unique(self.data_source.labels, return_counts=True)[1]
+        self.minority_class, self.majority_class = np.argmin(self.class_counts), np.argmax(self.class_counts)
+        self.minority_class_idx = np.argwhere(self.data_source.labels == self.minority_class).flatten()
+        self.majority_class_idx = np.argwhere(self.data_source.labels == self.majority_class).flatten()
+
+    def __iter__(self):
+        idx = np.append(self.minority_class_idx, np.random.choice(self.majority_class_idx,
+                                                                  len(self.minority_class_idx), replace=False))
+        np.random.shuffle(idx)
+        return iter(idx)
+
+    def __len__(self):
+        return 2 * len(self.minority_class_idx)
 
 
 class ImbalanceOverSampler(torch.utils.data.Sampler):

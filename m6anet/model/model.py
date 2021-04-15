@@ -70,6 +70,12 @@ class MILModel(Module):
         read_level_probability = self.pooling_filter.predict_read_level_prob(read_representation)
         site_level_probability = self.decoder(self.pooling_filter(read_representation))
         return read_level_probability, site_level_probability, read_representation
-        
+    
+    def get_attention_weights(self, x):
+        if hasattr(self.pooling_filter, "get_attention_weights"):
+            return self.pooling_filter.get_attention_weights(self.get_read_representation(x))
+        else:
+            raise ValueError("Pooling filter does not have attention weights")
+
     def forward(self, x):
         return self.get_site_probability(x)

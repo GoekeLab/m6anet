@@ -47,6 +47,31 @@ class SummaryStatsAggregator(PoolingFilter):
             return x
 
 
+class MeanAggregator(PoolingFilter):
+
+    def __init__(self, input_channel, n_reads_per_site=20):
+        super(MeanAggregator, self).__init__()
+        self.input_channel = input_channel
+        self.n_reads_per_site = n_reads_per_site
+
+    def aggregate(self, x):
+        x = x.view(-1, self.n_reads_per_site, self.input_channel)
+        mean = torch.mean(x, axis=1)
+        return mean
+
+    def forward(self, x):
+        is_dict = isinstance(x, dict)
+        
+        if is_dict:
+            x, kmer = x['X'], x['kmer']
+        x = self.aggregate(x)
+
+        if is_dict:
+            return {'X': x, 'kmer': kmer}
+        else:
+            return x
+
+
 class Attention(PoolingFilter):
 
     def __init__(self, input_channel, hidden_layers, activation='relu', n_reads_per_site=20):
@@ -75,20 +100,17 @@ class Attention(PoolingFilter):
         return nn.Sequential(*layers)
     
     def forward(self, x):
-        W = self.attention(x)  # non-linear transformation
-        
-        # Creating weight matrix
-        W = W.view(-1, self.n_reads_per_site, self.output_channel)
-        W = torch.transpose(W, 2, 1)  # KxN
-        W = F.softmax(W, dim=2)  # softmax over N
+        W = self.get_attention_weights(x)  # non-linear transformation
 
         # Linear combination of the original dimension
         M = torch.matmul(W, x.view(-1, self.n_reads_per_site, self.input_channel))  # KxL
         return nn.Flatten()(M)
 
     def predict_read_level_prob(self, x):
-        W = self.attention(x)  # non-linear transformation
-        
+        return self.get_attention_weights(x)
+
+    def get_attention_weights(self, x):
+        W = self.attention(x)
         # Creating weight matrix
         W = W.view(-1, self.n_reads_per_site, self.output_channel)
         W = torch.transpose(W, 2, 1)  # KxN
@@ -118,6 +140,9 @@ class ProbabilityAttention(PoolingFilter):
     
     def predict_read_level_prob(self, x):
         return self.read_classifier.predict_read_level_prob(x)
+    
+    def get_attention_weights(self, x):
+        return self.site_decoder.get_attention_weights(x)
 
 
 class SummaryStatsProbability(PoolingFilter):
@@ -168,6 +193,11 @@ class GatedAttention(Attention):
         a_v = self.attention_v(x)
         a_h = self.attention_h(x)
         return self.attention.predict_read_level_prob(a_v * a_h)
+    
+    def get_attention_weights(self, x):
+        a_v = self.attention_v(x)
+        a_h = self.attention_h(x)
+        return self.attention.get_attention_weights(a_v * a_h)
 
 
 class KDELayer(PoolingFilter):
@@ -235,6 +265,8 @@ class KDEGatedAttentionLayer(PoolingFilter):
     def predict_read_level_prob(self, x):
         return self.gated_attention.predict_read_level_prob(x)
 
+    def get_attention_weights(self, x):
+        return self.gated_attention.get_attention_weights(x)
 
 class SigmoidMeanPooling(PoolingFilter):
 

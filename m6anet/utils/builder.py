@@ -11,15 +11,16 @@ def random_fn(x):
     np.random.seed(datetime.datetime.now().second)
 
 
-def build_dataloader(train_config, num_workers):
+def build_dataloader(train_config, num_workers, verbose=True):
     
     train_ds = NanopolishDS(**train_config["dataset"], mode='Train')
     test_ds = NanopolishDS(**train_config["dataset"], mode='Test')
     val_ds = NanopolishDS(**train_config["dataset"], mode='Val')
     
-    print("There are {} train sites".format(len(train_ds)))
-    print("There are {} test sites".format(len(test_ds)))
-    print("There are {} val sites".format(len(val_ds)))
+    if verbose:
+        print("There are {} train sites".format(len(train_ds)))
+        print("There are {} test sites".format(len(test_ds)))
+        print("There are {} val sites".format(len(val_ds)))
 
     if "sampler" in train_config["dataloader"]["train"]:
         from . import data_utils

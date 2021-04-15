@@ -55,9 +55,7 @@ class DeaggregateNanopolish(Block):
 
 
     def forward(self, x):
-        x['X'] = x['X'].view(-1, self.n_features)
-        x['kmer'] = x['kmer'].view(-1, 1)
-        return x
+        return {'X': x['X'].view(-1, self.n_features), 'kmer':  x['kmer'].view(-1, 1)}
 
 
 class Flatten(Block):
@@ -77,8 +75,7 @@ class KmerMultipleEmbedding(Block):
 
     def forward(self, x):
         kmer =  x['kmer']
-        x['kmer'] = self.embedding_layer(kmer.long()).reshape(-1, self.n_features * self.output_channel)
-        return x
+        return {'X': x['X'], 'kmer' :self.embedding_layer(kmer.long()).reshape(-1, self.n_features * self.output_channel)}
 
 
 class Linear(Block):

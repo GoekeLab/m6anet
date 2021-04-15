@@ -122,7 +122,7 @@ def cross_validate(args):
                 best_model = (np.argmax(test_loss) + 1) * save_per_epoch
 
             model.load_state_dict(torch.load(os.path.join(fold_dir_save, "model_states", str(best_model), "model_states.pt")))
-            val_results = validate(model, val_dl, device, n_iterations)
+            val_results = validate(model, val_dl, device, test_criterion, n_iterations)
             print("Compute time: {compute_time:.3f} \t "
                   "Val Accuracy: {accuracy:.3f} \t "
                   "Val ROC AUC: {roc_auc:.3f} \t "

@@ -1,5 +1,4 @@
 [train_loss_function]
-
 loss_function_type = "read_site_level_entropy_cluster"
 mode = "prod_pooling"
 lambda_1 = 1

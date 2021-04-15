@@ -1,0 +1,19 @@
+model = "prod_sigmoid_pooling"
+
+[[block]]
+block_type = "DeaggregateNanopolish"
+num_neighboring_features = 2
+
+[[block]]
+block_type = "KmerMultipleEmbedding"
+input_channel = 288
+output_channel = 3
+num_neighboring_features = 2
+
+[[block]]
+block_type = "ConcatenateFeatures"
+
+[[block]]
+block_type = "SigmoidProdPooling"
+input_channel = 30
+n_reads_per_site = 20
