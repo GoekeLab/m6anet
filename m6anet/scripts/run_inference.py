@@ -27,7 +27,7 @@ def argparser():
     parser.add_argument("--model_config", default=DEFAULT_MODEL_CONFIG)
     parser.add_argument("--model_state_dict", default=DEFAULT_MODEL_WEIGHTS)
     parser.add_argument("--batch_size", default=64, type=int)
-    parser.add_argument("--num_workers", default=25, type=int)
+    parser.add_argument("--n_processes", default=25, type=int)
     parser.add_argument("--num_iterations", default=1, type=int)
     parser.add_argument("--device", default='cpu', type=str)
     return parser
@@ -36,7 +36,7 @@ def argparser():
 def run_inference(args):
     
     device = args.device
-    num_workers = args.num_workers
+    num_workers = args.n_processes
     input_dir = args.input_dir
     out_dir = args.out_dir
     num_iterations = args.num_iterations
@@ -56,7 +56,7 @@ def run_inference(args):
     result_df = ds.data_info[["transcript_id", "transcript_position", "n_reads"]].copy(deep=True)   
     results = inference(model, dl, device, num_iterations)
     result_df["probability_modified"] = results 
-    result_df.to_csv(os.path.join(out_dir, "data.result.csv"), index=False)
+    result_df.to_csv(os.path.join(out_dir, "data.result.csv.gz"), index=False)
 
 def main():
     args = argparser().parse_args()

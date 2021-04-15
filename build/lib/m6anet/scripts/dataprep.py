@@ -28,7 +28,7 @@ def get_args():
     optional.add_argument('--chunk_size', dest='chunk_size', help='number of lines from nanopolish eventalign.txt for processing.',type=int, default=1000000)
     optional.add_argument('--readcount_min', dest='readcount_min', help='minimum read counts per gene.',type=int, default=1)
     optional.add_argument('--readcount_max', dest='readcount_max', help='maximum read counts per gene.',type=int, default=1000)
-    optional.add_argument('--index', dest='index', help='with this argument the program will index eventalign.txt first.',default=False,action='store_true') #todo
+    optional.add_argument('--index', dest='index', help='with this argument the program will index eventalign.txt first.',default=False,action='store_false') #todo
     optional.add_argument('--n_neighbors', dest='n_neighbors', help='number of neighboring features to extract.',type=int, default=NUM_NEIGHBORING_FEATURES)
 
     parser._action_groups.append(optional)
@@ -373,7 +373,7 @@ def main():
     # (1) For each read, combine multiple events aligned to the same positions, the results from nanopolish eventalign, into a single event per position.
     eventalign_log_filepath = os.path.join(out_dir,'eventalign.log')
     # if not helper.is_successful(eventalign_log_filepath) and not resume: #some slight hack to skip index creation again after it is successful
-    if index:
+    if not index:
         parallel_index(eventalign_filepath,chunk_size,out_dir,n_processes)
     parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min,readcount_max, n_neighbors) #TO DO: RESUME FUNCTION
 
