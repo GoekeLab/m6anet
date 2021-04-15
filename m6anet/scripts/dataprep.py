@@ -1,12 +1,9 @@
 import argparse
 import numpy as np
 import pandas as pd
-import os,re
+import os
 import multiprocessing 
-import csv
 import ujson
-from pyensembl import EnsemblRelease
-from pyensembl import Genome
 from operator import itemgetter
 from collections import defaultdict
 from itertools import groupby
