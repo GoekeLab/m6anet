@@ -1,6 +1,7 @@
 import os
 import torch
 import toml
+import pkg_resources
 from argparse import ArgumentParser
 from argparse import ArgumentDefaultsHelpFormatter
 from copy import deepcopy
@@ -10,12 +11,11 @@ from ..utils.data_utils import NanopolishDS, inference_collate
 from ..utils.training_utils import inference
 from torch.utils.data import DataLoader
 
-ROOT_PATH = os.path.dirname(os.path.dirname(__file__))
-NORM_PATH = os.path.join(ROOT_PATH, "model/norm_factors/norm_dict.joblib")
-DEFAULT_MODEL_CONFIG =  os.path.join(ROOT_PATH, "model/configs/model_configs/prod_pooling.toml")
-DEFAULT_MODEL_WEIGHTS = os.path.join(ROOT_PATH, "model/model_states/prod_pooling_pr_auc.pt")
-MIN_READS = 20
 
+DEFAULT_MODEL_CONFIG = pkg_resources.resource_filename('m6anet.model', 'configs/model_configs/prod_pooling.toml')
+DEFAULT_MODEL_WEIGHTS = pkg_resources.resource_filename('m6anet.model', 'model_states/prod_pooling_pr_auc.pt')
+NORM_PATH = pkg_resources.resource_filename('m6anet.model', 'norm_factors/norm_dict.joblib')
+MIN_READS = 20
 
 def argparser():
     parser = ArgumentParser(
