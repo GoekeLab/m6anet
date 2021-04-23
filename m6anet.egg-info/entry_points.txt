@@ -1,6 +1,0 @@
-[console_scripts]
-m6anet-compute_norm_factors = m6anet.scripts.compute_normalization_factors:main
-m6anet-dataprep = m6anet.scripts.dataprep:main
-m6anet-run_inference = m6anet.scripts.run_inference:main
-m6anet-train = m6anet.scripts.train:main
-
