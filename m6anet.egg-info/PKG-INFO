@@ -25,6 +25,14 @@ Description: # m6anet
         
         See our documentation [here](https://m6anet.readthedocs.io/)!
         
+        ### Citing m6Anet 
+        
+        If you use m6Anet in your research, please use the following DOI for citation:
+        
+        [![DOI](https://zenodo.org/badge/281866292.svg)](https://zenodo.org/badge/latestdoi/281866292)
+        
+        Christopher Hendra, & Yuk Kei Wan. (2021, April 15). GoekeLab/m6anet: Pre-release (Version Pre-release). Zenodo. http://doi.org/10.5281/zenodo.4692776
+        
         ### Contributors
         
         This package is developed and maintaned by [Christopher Hendra](https://github.com/chrishendra93) and [Jonathan Göke](https://github.com/jonathangoeke). If you want to contribute, please leave an issue. Thank you.
