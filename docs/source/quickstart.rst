@@ -37,7 +37,7 @@ The output files are stored in ``demo_data``:
 
 Now we can run m6anet over our data using m6anet-inference::
 
-    m6anet-inference -input_dir demo_data --out_dir demo_data ---n_processes 4
+    m6anet-run_inference --input_dir demo_data --out_dir demo_data ---n_processes 4
 
 The output files `demo_data/data.result.csv.gz` contains the probability of modification at each individual position for each transcript. The output file will have 4 columns
 
