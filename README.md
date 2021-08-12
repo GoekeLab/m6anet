@@ -5,9 +5,13 @@ m6anet is a python tool to detect m6a modifications from Nanopore Direct RNA Seq
 
 ### Installation
 
-m6anet requires [Python3](https://www.python.org) to run.
+m6anet requires [Python3](https://www.python.org). To install the latest release with PyPI (recommended) run
 
-To install our m6anet package and its dependencies, run
+```sh
+$ pip install m6anet
+```
+
+Alternatively, one can clone this repository and install via setup.py
 
 ```sh
 $ git clone git@github.com:GoekeLab/m6anet.git
