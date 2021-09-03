@@ -7,7 +7,7 @@ Welcome to m6anet's documentation!
 ==================================
 m6anet is a python tool to detect m6a modifications from Nanopore Direct RNA Sequencing data
 
-To install our xpore package and its dependencies, run::
+To install our m6anet package and its dependencies, run::
 
         python setup.py install
         pip install -r requirements.txt
@@ -23,10 +23,10 @@ Contents
 
    installation
    quickstart
-
+   cmd
 
 Contacts
 --------------------------
-m6anet is developed and maintained by `Christopher Hendra <https://github.com/chrishendra93>`_ and `Jonathan Göeke <https://github.com/jonathangoeke>`_ from the Genome Institute of Singapore, A*STAR. If you want to contribute, please leave an issue in `our repo <https://github.com/GoekeLab/xpore>`_
+m6anet is developed and maintained by `Christopher Hendra <https://github.com/chrishendra93>`_ and `Jonathan Göeke <https://github.com/jonathangoeke>`_ from the Genome Institute of Singapore, A*STAR. If you want to contribute, please leave an issue in `our repo <https://github.com/GoekeLab/m6anet>`_
 
 Thank you!

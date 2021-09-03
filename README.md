@@ -22,6 +22,10 @@ $ pip install -r requirements.txt
 
 See our documentation [here](https://m6anet.readthedocs.io/)!
 
+### Getting help
+We appreciate your feedback and questions! You can report any error or suggestion related to m6Anet as an issue on [github](https://github.com/GoekeLab/m6anet/issues). If you have questions related to the manuscript, data, or any general comment or suggestion please use the [Discussions](https://github.com/GoekeLab/m6anet/discussions).
+
+Thank you!
 ### Citing m6Anet 
 
 If you use m6Anet in your research, please use the following DOI for citation:
@@ -33,6 +37,7 @@ Christopher Hendra, & Yuk Kei Wan. (2021, April 15). GoekeLab/m6anet: Pre-releas
 ### Contributors
 
 This package is developed and maintaned by [Christopher Hendra](https://github.com/chrishendra93) and [Jonathan Göke](https://github.com/jonathangoeke). If you want to contribute, please leave an issue. Thank you.
+
 ### License
 MIT
 

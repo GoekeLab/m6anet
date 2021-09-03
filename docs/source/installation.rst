@@ -1,12 +1,20 @@
 .. _installation:
 
 Installation
-==================================
-m6anet requires `Python3 <https://www.python.org>`_ to run.
+=======================
 
-Installation from our Github repository
-----------------------------------
-Currently the only supported way to install m6anet is by cloning our github repository.
+m6Anet requires `Python3 <https://www.python.org>`_ to run.
+
+PyPI installation (recommended)
+---------------------------------
 ::
-        git clone https://github.com/GoekeLab/m6anet.git
-        python setup.py install
+
+    pip install m6anet
+
+Installation from our GitHub repository
+---------------------------------------
+::
+
+    git clone https://github.com/GoekeLab/m6anet.git
+    cd m6anet
+    python setup.py install
