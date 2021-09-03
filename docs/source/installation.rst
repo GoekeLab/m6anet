@@ -3,7 +3,7 @@
 Installation
 =======================
 
-m6Anet requires `Python3 <https://www.python.org>`_ to run.
+m6Anet requires `Python version 3.8 or higher <https://www.python.org>`_ to run.
 
 PyPI installation (recommended)
 ---------------------------------

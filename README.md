@@ -5,7 +5,7 @@ m6anet is a python tool that leverages Multiple Instance Learning framework to d
 
 ### Installation
 
-m6anet requires [Python3](https://www.python.org). To install the latest release with PyPI (recommended) run
+m6anet requires [Python version 3.8 or higher](https://www.python.org). To install the latest release with PyPI (recommended) run
 
 ```sh
 $ pip install m6anet
