@@ -2,9 +2,9 @@
 
 Quick Start
 ==================================
-Download and extract the demo dataset from our `S3 bucket <http://s3.ap-southeast-1.amazonaws.com/all-public-data.store.genome.sg/xpore/demo.tar.gz>`_::
+Download and extract the demo dataset from `Zenodo <https://zenodo.org/record/5103099/files/demo.tar.gz>`_::
 
-    wget http://s3.ap-southeast-1.amazonaws.com/all-public-data.store.genome.sg/xpore/demo.tar.gz
+    wget https://zenodo.org/record/5103099/files/demo.tar.gz
     tar -xvf demo.tar.gz
 
 After extraction, you will find::
