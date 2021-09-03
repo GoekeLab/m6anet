@@ -28,7 +28,7 @@ def argparser():
     parser.add_argument("--model_state_dict", default=DEFAULT_MODEL_WEIGHTS)
     parser.add_argument("--batch_size", default=64, type=int)
     parser.add_argument("--n_processes", default=25, type=int)
-    parser.add_argument("--num_iterations", default=1, type=int)
+    parser.add_argument("--num_iterations", default=5, type=int)
     parser.add_argument("--device", default='cpu', type=str)
     return parser
 

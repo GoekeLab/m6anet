@@ -18,7 +18,7 @@ def argparser():
     parser.add_argument("--model_config", default=None, required=True)
     parser.add_argument("--train_config", default=None, required=True)
     parser.add_argument("--save_dir", default=None, required=True)
-    parser.add_argument("--device", default="cuda:2")
+    parser.add_argument("--device", default="cpu")
     parser.add_argument("--lr", default=4e-4, type=float)
     parser.add_argument("--seed", default=25, type=int)
     parser.add_argument("--epochs", default=50, type=int)
@@ -27,7 +27,7 @@ def argparser():
     parser.add_argument("--lr_scheduler", dest='lr_scheduler', default=None, action='store_true')
     parser.add_argument("--read_level_info", dest='read_level_info', default=None, action='store_true')
     parser.add_argument("--weight_decay", dest="weight_decay", default=0, type=float)
-    parser.add_argument("--num_iterations", default=1, type=int)
+    parser.add_argument("--num_iterations", default=5, type=int)
     return parser
 
 

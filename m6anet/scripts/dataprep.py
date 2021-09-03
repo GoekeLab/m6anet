@@ -23,7 +23,6 @@ def get_args():
     # Required arguments
     required.add_argument('--eventalign', dest='eventalign', help='eventalign filepath, the output from nanopolish.',required=True)
     required.add_argument('--out_dir', dest='out_dir', help='output directory.',required=True)
-    
     optional.add_argument('--n_processes', dest='n_processes', help='number of processes to run.',type=int, default=1)
     optional.add_argument('--chunk_size', dest='chunk_size', help='number of lines from nanopolish eventalign.txt for processing.',type=int, default=1000000)
     optional.add_argument('--readcount_min', dest='readcount_min', help='minimum read counts per gene.',type=int, default=1)
@@ -181,22 +180,9 @@ def combine(events_str):
 
 
         eventalign_result['transcript_id'] = [contig.split('.')[0] for contig in eventalign_result['contig']]    #### CHANGE MADE ####
-        #eventalign_result['transcript_id'] = eventalign_result['contig']
 
         eventalign_result['transcriptomic_position'] = pd.to_numeric(eventalign_result['position']) + 2 # the middle position of 5-mers.
-        # eventalign_result = misc.str_encode(eventalign_result)
-#         eventalign_result['read_id'] = [read_name]*len(eventalign_result)
-
-        # features = ['read_id','transcript_id','transcriptomic_position','reference_kmer','norm_mean','start_idx','end_idx']
-        # features_dtype = np.dtype([('read_id', 'S36'), ('transcript_id', 'S15'), ('transcriptomic_position', '<i8'), ('reference_kmer', 'S5'), ('norm_mean', '<f8'), ('start_idx', '<i8'), ('end_idx', '<i8')])
-        
-#         features = ['transcript_id','transcriptomic_position','reference_kmer','norm_mean']
-
-#         df_events = eventalign_result[['read_index']+features]
-#         # print(df_events.head())
-
         features = ['transcript_id','read_index','transcriptomic_position','reference_kmer','norm_mean','norm_std','dwell_time']
-#        np_events = eventalign_result[features].reset_index().values.ravel().view(dtype=[('transcript_id', 'S15'), ('transcriptomic_position', '<i8'), ('reference_kmer', 'S5'), ('norm_mean', '<f8')])
         df_events = eventalign_result[features]
         np_events = np.rec.fromrecords(df_events, names=[*df_events])
         return np_events
@@ -215,9 +201,6 @@ def parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min
     # Writing the starting of the files.
     gene_ids_done = []
 
-    # with open(out_paths['json'],'w') as f:
-    #     f.write('{\n')
-    #     f.write('"genes":{')
     open(out_paths['json'],'w').close()
     with open(out_paths['index'],'w') as f:
         f.write('transcript_id,transcript_position,start,end\n') # header
@@ -262,9 +245,6 @@ def parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min
     # Wait for all of the tasks to finish.
     task_queue.join()
     
-##    with open(out_paths['log'],'a+') as f:
-##        f.write('Total %d genes.\n' %len(gene_ids_processed))
-##        f.write(helper.decor_message('successfully finished'))
 
 def preprocess_tx(tx_id,data_dict,n_neighbors,out_paths,locks):  # todo
     """
@@ -344,10 +324,8 @@ def preprocess_tx(tx_id,data_dict,n_neighbors,out_paths,locks):  # todo
             f.write('}}\n')
             pos_end = f.tell()
         
-            # with locks['index'], open(out_paths['index'],'a') as f:
             g.write('%s,%d,%d,%d\n' %(tx_id,pos,pos_start,pos_end))
         
-            # with locks['readcount'], open(out_paths['readcount'],'a') as f: #todo: repeats no. of tx >> don't want it.
             n_reads = 0
             for kmer, features in dat.items():
                 n_reads += len(features)
@@ -370,12 +348,11 @@ def main():
     n_neighbors = args.n_neighbors
     misc.makedirs(out_dir) #todo: check every level.
     
-    # (1) For each read, combine multiple events aligned to the same positions, the results from nanopolish eventalign, into a single event per position.
+    # For each read, combine multiple events aligned to the same positions, the results from nanopolish eventalign, into a single event per position.
     eventalign_log_filepath = os.path.join(out_dir,'eventalign.log')
-    # if not helper.is_successful(eventalign_log_filepath) and not resume: #some slight hack to skip index creation again after it is successful
     if not index:
         parallel_index(eventalign_filepath,chunk_size,out_dir,n_processes)
-    parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min,readcount_max, n_neighbors) #TO DO: RESUME FUNCTION
+    parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min,readcount_max, n_neighbors)
 
 if __name__ == '__main__':
     main()
