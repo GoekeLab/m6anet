@@ -2,7 +2,7 @@
 
 Quick Start
 ==================================
-Download and extract the demo dataset from `Zenodo <https://zenodo.org/record/5103099/files/demo.tar.gz>`_::
+Download and extract the demo dataset from xPore <https://github.com/GoekeLab/xpore> `Zenodo <https://zenodo.org/record/5103099/files/demo.tar.gz>`_::
 
     wget https://zenodo.org/record/5103099/files/demo.tar.gz
     tar -xvf demo.tar.gz
@@ -15,7 +15,7 @@ After extraction, you will find::
         |-- HEK293T-METTL3-KO-rep1  # dataset dir
         |-- HEK293T-WT-rep1 # dataset dir
 
-Each dataset under the ``data`` directory contains the following directories:
+Here we are not going to use the Hek293T_config.yml. The dataset that we will be using comes under the ``data`` directory and it contains the following sub-directories:
 
 * ``fast5`` : Raw signal FAST5 files
 * ``fastq`` : Basecalled reads
@@ -35,7 +35,7 @@ The output files are stored in ``demo_data``:
 * ``data.readcount``: File containing the number of reads for each DRACH positions in eventalign.txt
 * ``eventalign.index``: Index file created during dataprep to allow faster access of Nanopolish eventalign.txt during dataprep
 
-Now we can run m6anet over our data using m6anet-inference::
+Now we can run m6anet over our data using m6anet-run_inference::
 
     m6anet-run_inference --input_dir demo_data --out_dir demo_data ---n_processes 4
 
