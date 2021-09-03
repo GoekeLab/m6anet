@@ -2,7 +2,7 @@
 
 Quick Start
 ==================================
-Download and extract the demo dataset from xPore <https://github.com/GoekeLab/xpore> `Zenodo <https://zenodo.org/record/5103099/files/demo.tar.gz>`_::
+Download and extract the demo dataset from `xPore <https://github.com/GoekeLab/xpore>`_ `Zenodo <https://zenodo.org/record/5103099/files/demo.tar.gz>`_::
 
     wget https://zenodo.org/record/5103099/files/demo.tar.gz
     tar -xvf demo.tar.gz
