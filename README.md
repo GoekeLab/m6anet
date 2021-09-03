@@ -1,7 +1,7 @@
 # m6anet
 ![alt text](https://github.com/GoekeLab/m6anet/blob/master/figures/m6anet_logo.png "m6anet")
 
-m6anet is a python tool to detect m6a modifications from Nanopore Direct RNA Sequencing data
+m6anet is a python tool that leverages Multiple Instance Learning framework to detect m6a modifications from Nanopore Direct RNA Sequencing data
 
 ### Installation
 
