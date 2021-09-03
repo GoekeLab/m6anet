@@ -10,16 +10,6 @@ m6anet requires [Python version 3.8 or higher](https://www.python.org). To insta
 ```sh
 $ pip install m6anet
 ```
-
-Alternatively, one can clone this repository and install via setup.py
-
-```sh
-$ git clone git@github.com:GoekeLab/m6anet.git
-$ cd m6anet
-$ python setup.py install
-$ pip install -r requirements.txt 
-```
-
 See our documentation [here](https://m6anet.readthedocs.io/)!
 
 ### Getting help
