@@ -7,10 +7,9 @@ Welcome to m6anet's documentation!
 ==================================
 m6anet is a python tool that leverages Multiple Instance Learning framework to detect m6a modifications from Nanopore Direct RNA Sequencing data.
 
-To install our m6anet package and its dependencies, run::
+m6anet requires Python version 3.8 or higher. To install the latest release with PyPI (recommended) run::
 
-        python setup.py install
-        pip install -r requirements.txt
+        pip install m6anet
 
 See our :ref:`Installation page <installation>` for details.
 
