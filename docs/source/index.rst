@@ -23,6 +23,7 @@ Contents
    installation
    quickstart
    cmd
+   configuration
    help
 
 Contacts
