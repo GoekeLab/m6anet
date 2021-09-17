@@ -3,7 +3,7 @@
 Installation
 =======================
 
-m6Anet requires `Python version 3.8 or higher <https://www.python.org>`_ to run.
+m6Anet requires `Python version 3.8 or higher <https://www.python.org>`_ to run. Installation typically takes less than 5 minutes but might vary depending on your connection speed
 
 PyPI installation (recommended)
 ---------------------------------

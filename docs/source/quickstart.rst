@@ -45,3 +45,5 @@ The output files `demo_data/data.result.csv.gz` contains the probability of modi
 * ``transcript_position``: The transcript position of the predicted position
 * ``n_reads``: The number of reads for that particular position
 * ``probability_modified``: The probability that a given site is modified
+
+The total run time should not exceed 10 minutes on a normal laptop
