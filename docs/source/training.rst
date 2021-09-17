@@ -35,7 +35,6 @@ Below is the content of oversampled.toml
 
 User can modify some basic training information such as the batch_size, the number of neighboring features, as well as the minimum number of reads per site to train m6Anet. We have also calculated the normalization factors required under norm_path variable. In principle, one can even change the loss_function_type by choosing one from m6anet/m6anet/utils/loss_functions.py or defining a new one. Sampler can be set to ImbalanceOverSampler (in which the model will perform oversampling to tackle the data imbalance with m6Anet modification) or any other sampler from m6anet/m6anet/utils/data_utils.py
 
-|
 
 The training script will look for data.readcount.labelled file and data.index file under the root_dir directory. While data.index can be obtained by running m6anet-dataprep over nanopolish eventalign.txt file, data.readcount.labelled must be supplied by the user by adding extra columns to the data.readcount file produced by m6anet-dataprep. Additionally, data.readcount.labelled must be of the following format::
 
@@ -50,8 +49,6 @@ The training script will look for data.readcount.labelled file and data.index fi
  ENST00000523944 2196                14      0                   Test
 
 Here modification status tells the model which positions are modified and which positions are not modified. The column set_type informs the training script which part of the data we should train on and which part of the data should be used for validation and testing purpose. Lastly, n_reads corresponds to the number of reads that comes from the corresponding transcript positions and any sites with n_reads less than the min_reads specified in he training config file will not be used for training validation, or testing. We have also provided an example of data.readcount.labelled in m6anet/demo/ folder.
-
-|
 
 Below is the content of prod_pooling.toml::
 
@@ -89,11 +86,7 @@ Below is the content of prod_pooling.toml::
  input_channel = 32
  n_reads_per_site = 20
 
-|
-
 The training script will build the model block by block. For additional information on the block type, please check the source code under m6anet/m6anet/model/model_blocks
-
-|
 
 In order to train m6Anet, please change the root_dir variable inside prod_pooling.toml to m6anet/demo/. Afterwards, run m6anet-dataprep::
 
