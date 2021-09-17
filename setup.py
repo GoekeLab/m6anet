@@ -14,7 +14,7 @@ setup(
     name=__pkg_name__,
     license="MIT",
     description='m6anet is a python package for detection of m6a modifications from Nanopore direct RNA sequencing data.',
-    version='v0.0.2',
+    version='v1.0.0',
     long_description=README,
     url='https://github.com/GoekeLab/m6anet',
     packages=find_packages(),

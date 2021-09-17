@@ -27,7 +27,7 @@ def get_args():
     optional.add_argument('--chunk_size', dest='chunk_size', help='number of lines from nanopolish eventalign.txt for processing.',type=int, default=1000000)
     optional.add_argument('--readcount_min', dest='readcount_min', help='minimum read counts per gene.',type=int, default=1)
     optional.add_argument('--readcount_max', dest='readcount_max', help='maximum read counts per gene.',type=int, default=1000)
-    optional.add_argument('--index', dest='index', help='with this argument the program will index eventalign.txt first.',default=False,action='store_true')
+    optional.add_argument('--skip_index', dest='skip_index', help='with this argument the program will skip indexing eventalign.txt first.',default=False,action='store_true')
     optional.add_argument('--n_neighbors', dest='n_neighbors', help='number of neighboring features to extract.',type=int, default=NUM_NEIGHBORING_FEATURES)
 
     parser._action_groups.append(optional)
@@ -47,7 +47,7 @@ def partition_into_continuous_positions(arr, window_size=1):
                                                                   lambda x: x[0] - x[1])]
     return [(float_arr[partition],
              kmer_arr[partition], tx_id_arr[partition], tx_pos_arr[partition]) 
-            for partition in partitions if len(partition) > 2 * window_size + 1]
+            for partition in partitions if len(partition) >= 2 * window_size + 1]
 
 def filter_by_kmer(partition, kmers, window_size):
     feature_arr, kmer_arr, tx_id_arr, tx_pos_arr = partition
@@ -158,10 +158,10 @@ def combine(events_str):
         eventalign_result = eventalign_result[cond_successfully_eventaligned]
 
         keys = ['read_index','contig','position','reference_kmer'] # for groupby
-        eventalign_result['length'] = pd.to_numeric(eventalign_result['end_idx'])-pd.to_numeric(eventalign_result['start_idx'])
-        eventalign_result['sum_norm_mean'] = pd.to_numeric(eventalign_result['event_level_mean']) * eventalign_result['length']
-        eventalign_result['sum_norm_std'] = pd.to_numeric(eventalign_result['event_stdv']) * eventalign_result['length']
-        eventalign_result['sum_dwell_time'] = pd.to_numeric(eventalign_result['event_length']) * eventalign_result['length']
+        eventalign_result.loc[:, 'length'] = pd.to_numeric(eventalign_result['end_idx'])-pd.to_numeric(eventalign_result['start_idx'])
+        eventalign_result.loc[:, 'sum_norm_mean'] = pd.to_numeric(eventalign_result['event_level_mean']) * eventalign_result['length']
+        eventalign_result.loc[:, 'sum_norm_std'] = pd.to_numeric(eventalign_result['event_stdv']) * eventalign_result['length']
+        eventalign_result.loc[:, 'sum_dwell_time'] = pd.to_numeric(eventalign_result['event_length']) * eventalign_result['length']
             
         eventalign_result = eventalign_result.groupby(keys)  
         sum_norm_mean = eventalign_result['sum_norm_mean'].sum() 
@@ -199,7 +199,6 @@ def parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min
         locks[out_filetype] = multiprocessing.Lock()
                 
     # Writing the starting of the files.
-    gene_ids_done = []
 
     open(out_paths['json'],'w').close()
     with open(out_paths['index'],'w') as f:
@@ -266,7 +265,6 @@ def preprocess_tx(tx_id,data_dict,n_neighbors,out_paths,locks):  # todo
     
     # features = ['read_id','transcript_id','transcriptomic_position','reference_kmer','norm_mean','start_idx','end_idx'] # columns in the eventalign file per read.
 
-    # Concatenate
     if len(data_dict) == 0:
         return
     
@@ -274,8 +272,7 @@ def preprocess_tx(tx_id,data_dict,n_neighbors,out_paths,locks):  # todo
     reference_kmer_arrays = []
     transcriptomic_positions_arrays = []
 
-    for read_id,events_per_read in data_dict.items(): 
-        # print(read_id)
+    for _,events_per_read in data_dict.items(): 
         events_per_read = filter_events(events_per_read, n_neighbors, M6A_KMERS)
         for event_per_read in events_per_read:
             features_arrays.append(event_per_read[0])
@@ -344,13 +341,11 @@ def main():
     out_dir = args.out_dir
     readcount_min = args.readcount_min    
     readcount_max = args.readcount_max
-    index = args.index
+    skip_index = args.skip_index
     n_neighbors = args.n_neighbors
     misc.makedirs(out_dir) #todo: check every level.
-    
     # For each read, combine multiple events aligned to the same positions, the results from nanopolish eventalign, into a single event per position.
-    eventalign_log_filepath = os.path.join(out_dir,'eventalign.log')
-    if not index:
+    if not skip_index:
         parallel_index(eventalign_filepath,chunk_size,out_dir,n_processes)
     parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min,readcount_max, n_neighbors)
 

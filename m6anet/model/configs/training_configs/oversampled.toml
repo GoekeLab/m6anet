@@ -1,13 +1,10 @@
-[train_loss_function]
-loss_function_type = "binary_cross_entropy_loss"
-
-[test_loss_function]
+[loss_function]
 loss_function_type = "binary_cross_entropy_loss"
 
 [dataset]
-root_dir = "/home/christopher/hct116_dataprep_5_neighbors"
+root_dir = "/home/christopherhendra/m6anet_test/demo2/"
 min_reads = 20
-norm_path = "/home/christopher/hct116_dataprep_5_neighbors/norm_dict.joblib"   
+norm_path = "/home/christopherhendra/m6anet/m6anet/model/norm_factors/norm_dict.joblib"   
 num_neighboring_features = 1
 
 [dataloader]
@@ -15,10 +12,10 @@ num_neighboring_features = 1
     batch_size = 256
     sampler = "ImbalanceOverSampler"
 
-    [dataloader.test]
+    [dataloader.val]
     batch_size = 256
     shuffle = false
 
-    [dataloader.val]
+    [dataloader.test]
     batch_size = 256
     shuffle = false
