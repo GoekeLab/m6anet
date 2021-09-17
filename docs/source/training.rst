@@ -102,6 +102,6 @@ In order to train m6Anet, please change the root_dir variable inside prod_poolin
 
 This will produce data.index file and data.json file that will be used for the script to access the preprocessed data Next, to train m6Anet using the demo data, run::
 
-   m6anet-train --model_config m6anet/model/configs/model_configs/prod_pooling.toml --train_config ../m6anet/model/configs/training_configs/oversampled.toml --save_dir /path/to/save_dir --device cpu --lr 0.0001 --seed 25 --epochs 30 --num_workers 4 --save_per_epoch 1
+   m6anet-train --model_config m6anet/model/configs/model_configs/prod_pooling.toml --train_config ../m6anet/model/configs/training_configs/oversampled.toml --save_dir /path/to/save_dir --device cpu --lr 0.0001 --seed 25 --epochs 30 --num_workers 4 --save_per_epoch 1 --num_iterations 5
 
-The model will be trained on cpu for 30 epochs and we will save the model states every 1 epoch. One can replace the device argument with cuda to train with GPU
+The model will be trained on cpu for 30 epochs and we will save the model states every 1 epoch. One can replace the device argument with cuda to train with GPU. For complete description of the command line arguments, please see :ref:`Command line arguments page <cmd>`
