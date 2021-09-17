@@ -23,6 +23,7 @@ Contents
    installation
    quickstart
    cmd
+   training
    help
 
 Contacts
