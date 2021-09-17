@@ -25,7 +25,7 @@ def get_accuracy(y_true, y_pred):
 
 
 def train(model, train_dl, val_dl, optimizer, n_epoch, device, criterion,
-          scheduler=None, save_dir=None, clip_grad=None,
+          save_dir=None, clip_grad=None,
           save_per_epoch=10, epoch_increment=0, n_iterations=1):
     
     assert(save_per_epoch <= n_epoch)
@@ -36,7 +36,7 @@ def train(model, train_dl, val_dl, optimizer, n_epoch, device, criterion,
     
     for epoch in range(1, n_epoch + 1):
         train_results_epoch = train_one_epoch(model, train_dl, device, optimizer, criterion, 
-                                              scheduler=scheduler, clip_grad=clip_grad)
+                                              clip_grad=clip_grad)
         val_results_epoch = validate(model, val_dl, device, criterion, n_iterations)
 
         total_train_time += train_results_epoch["compute_time"] + val_results_epoch["compute_time"]
@@ -86,7 +86,7 @@ def train(model, train_dl, val_dl, optimizer, n_epoch, device, criterion,
     return train_results, val_results
 
 
-def train_one_epoch(model, pair_dataloader, device, optimizer, criterion, scheduler=None, clip_grad=None):
+def train_one_epoch(model, pair_dataloader, device, optimizer, criterion, clip_grad=None):
     model.train()
     train_loss_list = []
 
@@ -121,10 +121,6 @@ def train_one_epoch(model, pair_dataloader, device, optimizer, criterion, schedu
         else:
             all_y_pred.extend(y_pred[:, 1])
 
-        if scheduler is not None:
-            #update learning rate when scheduler is given
-            scheduler.step()
-            
     compute_time = time.time() - start
     all_y_true = np.array(all_y_true)
     all_y_pred = np.array(all_y_pred)

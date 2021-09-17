@@ -24,7 +24,6 @@ def argparser():
     parser.add_argument("--epochs", default=50, type=int)
     parser.add_argument("--num_workers", default=25, type=int)
     parser.add_argument("--save_per_epoch", default=10, type=int)
-    parser.add_argument("--lr_scheduler", dest='lr_scheduler', default=None, action='store_true')
     parser.add_argument("--weight_decay", dest="weight_decay", default=0, type=float)
     parser.add_argument("--num_iterations", default=5, type=int)
     return parser
@@ -40,7 +39,6 @@ def train_and_save(args):
     num_workers = args.num_workers
     n_epoch = args.epochs
     lr = args.lr
-    lr_scheduler = args.lr_scheduler
     save_per_epoch = args.save_per_epoch
     save_dir = args.save_dir
     weight_decay = args.weight_decay
@@ -62,7 +60,6 @@ def train_and_save(args):
     train_info["train_config"]["save_per_epoch"] = save_per_epoch
     train_info["train_config"]["weight_decay"] = weight_decay
     train_info["train_config"]["number_of_validation_iterations"] = n_iterations
-    train_info["train_config"]["lr_scheduler"] = lr_scheduler
     train_info["train_config"]["seed"] = seed
 
     with open(os.path.join(save_dir, "train_info.toml"), 'w') as f:
@@ -76,7 +73,7 @@ def train_and_save(args):
     criterion = build_loss_function(train_config['loss_function'])
 
     train_results, val_results = train(model, train_dl, val_dl, optimizer, n_epoch, device, 
-                                       criterion, save_dir=save_dir, scheduler=None,
+                                       criterion, save_dir=save_dir,
                                        save_per_epoch=save_per_epoch, n_iterations=n_iterations)
 
     joblib.dump(train_results, os.path.join(save_dir, "train_results.joblib"))      
