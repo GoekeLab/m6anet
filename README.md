@@ -18,9 +18,8 @@ We appreciate your feedback and questions! You can report any error or suggestio
 Thank you!
 ### Citing m6Anet 
 
-If you use m6Anet in your research, please use the following DOI for citation:
-
-[![DOI](https://zenodo.org/badge/281866292.svg)](https://zenodo.org/badge/latestdoi/281866292)
+If you use m6Anet in your research, please cite
+Christopher Hendra, et al.,Detection of m6A from direct RNA sequencing using a Multiple Instance Learning framework, `https://doi.org/10.1101/2021.09.20.461055`_
 
 Christopher Hendra, & Yuk Kei Wan. (2021, April 15). GoekeLab/m6anet: Pre-release (Version Pre-release). Zenodo. http://doi.org/10.5281/zenodo.4692776
 
