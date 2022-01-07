@@ -179,8 +179,7 @@ def combine(events_str):
         eventalign_result.reset_index(inplace=True)
 
 
-        eventalign_result['transcript_id'] = [contig.split('.')[0] for contig in eventalign_result['contig']]    #### CHANGE MADE ####
-
+        eventalign_result['transcript_id'] = eventalign_result['contig']    #### CHANGE MADE ####
         eventalign_result['transcriptomic_position'] = pd.to_numeric(eventalign_result['position']) + 2 # the middle position of 5-mers.
         features = ['transcript_id','read_index','transcriptomic_position','reference_kmer','norm_mean','norm_std','dwell_time']
         df_events = eventalign_result[features]
@@ -216,7 +215,7 @@ def parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min
         p.start()
     
     df_eventalign_index = pd.read_csv(os.path.join(out_dir,'eventalign.index'))
-    df_eventalign_index['transcript_id'] = [tx_id.split('.')[0] for tx_id in  df_eventalign_index['transcript_id']]
+    df_eventalign_index['transcript_id'] = df_eventalign_index['transcript_id']
     tx_ids = df_eventalign_index['transcript_id'].values.tolist()
     tx_ids = list(dict.fromkeys(tx_ids))
     df_eventalign_index.set_index('transcript_id',inplace=True)
