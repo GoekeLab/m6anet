@@ -5,7 +5,7 @@ import torch
 import json
 import joblib
 from ..scripts.compute_normalization_factors import annotate_kmer_information, create_kmer_mapping_df, create_norm_dict
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import Dataset
 from torch.utils.data._utils.collate import default_collate
 from itertools import product
 
@@ -22,10 +22,11 @@ class NanopolishDS(Dataset):
         
         self.mode = mode
         self.site_info = site_info
-        self.data_info = self.initialize_data_info(root_dir, min_reads)
-        self.data_fpath = os.path.join(root_dir, "data.json")
         self.min_reads = min_reads
         self.site_mode = site_mode
+
+        self.initialize_data_info(root_dir, min_reads)
+        
 
         if norm_path is not None:
             self.norm_dict = joblib.load(norm_path)
@@ -75,7 +76,8 @@ class NanopolishDS(Dataset):
             read_count = read_count[read_count["set_type"] == self.mode].reset_index(drop=True)
 
         data_info = data_index.merge(read_count, on=["transcript_id", "transcript_position"])
-        return data_info[data_info["n_reads"] >= min_reads].reset_index(drop=True)
+        self.data_fpath = os.path.join(root_dir, "data.json")
+        self.data_info = data_info[data_info["n_reads"] >= min_reads].reset_index(drop=True)
 
     def __len__(self):
         return len(self.data_info)
@@ -143,6 +145,63 @@ class NanopolishDS(Dataset):
 
     def _retrieve_sequence(self, sequence, n_neighboring_features=0):
         return [sequence[i : i+5] for i in range(len(sequence) - 4)]
+
+ 
+class NanopolishReplicateDS(NanopolishDS):
+
+    def __init__(self, root_dirs, min_reads, norm_path=None, site_info=None,
+                 num_neighboring_features=1, mode='Inference', site_mode=False,
+                 n_processes=1):
+        super().__init__(root_dirs, min_reads, norm_path, site_info,
+                         num_neighboring_features, mode, site_mode,
+                         n_processes)
+    
+    def initialize_data_info(self, root_dirs, min_reads):
+        all_read_info = [pd.read_csv(os.path.join(root_dir, "data.index"))\
+                                      .merge(pd.read_csv(os.path.join(root_dir, "data.readcount")), 
+                                             on=["transcript_id", "transcript_position"])\
+                                      .set_index(["transcript_id", "transcript_position"])\
+                                                 .assign(fpath=root_dir)
+                     for root_dir in root_dirs]
+        read_info = pd.concat(all_read_info, axis=1)
+        total_reads = read_info["n_reads"].sum(axis=1).reset_index(drop=True)
+        start = read_info["start"].apply(lambda x: [int(col) for col in x if col == col], axis=1)
+        end = read_info["end"].apply(lambda x: [int(col) for col in x if col == col], axis=1)
+        fpath = read_info["fpath"].apply(lambda x: [col for col in x if col == col], axis=1).reset_index(drop=True)
+        coord = pd.concat([start, end], axis=1).apply(lambda x: [(x, y) for x, y in zip(x[0],x[1])], axis=1)\
+            .reset_index(drop=True)
+        read_info = read_info.reset_index()[["transcript_id", "transcript_position"]]
+        read_info["n_reads"] = total_reads.astype('int')
+        read_info["coords"] = coord
+        read_info["fpath"] = fpath
+        self.data_info = read_info[read_info["n_reads"] >= min_reads].reset_index(drop=True)
+        self.data_info_debug = read_info.reset_index(drop=True)
+
+        
+    def _load_data(self, idx):
+        tx_id, tx_pos, coords, fpaths = self.data_info.iloc[idx][["transcript_id", "transcript_position",
+                                                                  "coords", "fpath"]]
+        all_features = []
+        all_kmer = None
+        for coord, fpath in zip(coords, fpaths):
+        
+            start_pos, end_pos = coord
+            
+            with open(os.path.join(fpath, "data.json"), 'r') as f:
+                f.seek(start_pos, 0)
+                json_str = f.read(end_pos - start_pos)
+                pos_info = json.loads(json_str)[tx_id][str(tx_pos)]
+
+                assert(len(pos_info.keys()) == 1)
+
+                kmer, features = list(pos_info.items())[0]
+                if all_kmer is None:
+                    all_kmer = kmer
+                else:
+                    assert(all_kmer == kmer)
+                all_features.append(features)
+        all_features = np.concatenate(all_features) 
+        return all_kmer, all_features
 
 
 class ImbalanceUnderSampler(torch.utils.data.Sampler):

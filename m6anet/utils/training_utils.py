@@ -2,8 +2,7 @@ import numpy as np
 import os
 import torch
 import time
-from collections import Iterable
-from torch import nn
+from collections import OrderedDict
 from sklearn.metrics import accuracy_score, roc_curve, precision_recall_curve, auc
 from torch.nn.utils import clip_grad_norm_
 
@@ -184,11 +183,19 @@ def inference(model, dl, device, n_iterations=1):
     """
     model.eval()
     all_y_pred = []
+    all_kmers = None
+    kmer_maps = dl.dataset.int_to_kmer
+    data_info_debug = dl.dataset.data_info_debug
     with torch.no_grad():
         for _ in range(n_iterations):
+            kmers = []
             y_pred_tmp = []
             for batch in dl:
-                X = {key: val.to(device) for key, val in batch.items()}
+                X = OrderedDict({key: val.to(device) for key, val in batch.items()})
+
+                if all_kmers is None:
+                    kmers.append([kmer_maps[x[0][x.shape[-1] // 2].item()] for x in X['kmer']])
+
                 y_pred = model(X)
                 y_pred = y_pred.detach().cpu().numpy()
                 if (len(y_pred.shape) == 1) or (y_pred.shape[1] == 1):
@@ -197,4 +204,7 @@ def inference(model, dl, device, n_iterations=1):
                     y_pred_tmp.extend(y_pred[:, 1])
 
             all_y_pred.append(y_pred_tmp)
-    return np.mean(all_y_pred, axis=0)
+
+            if all_kmers is None:
+                all_kmers = np.concatenate(kmers)
+    return np.mean(all_y_pred, axis=0), all_kmers, data_info_debug

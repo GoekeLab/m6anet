@@ -7,7 +7,7 @@ from argparse import ArgumentDefaultsHelpFormatter
 from copy import deepcopy
 from ..model.model import MILModel
 from ..utils.builder import random_fn
-from ..utils.data_utils import NanopolishDS, inference_collate
+from ..utils.data_utils import NanopolishDS, NanopolishReplicateDS, inference_collate
 from ..utils.training_utils import inference
 from torch.utils.data import DataLoader
 
@@ -22,7 +22,7 @@ def argparser():
         formatter_class=ArgumentDefaultsHelpFormatter,
         add_help=False
     )
-    parser.add_argument("--input_dir", default=None, required=True)
+    parser.add_argument("--input_dir", default=None, nargs="*", required=True)
     parser.add_argument("--out_dir", default=None, required=True)
     parser.add_argument("--model_config", default=DEFAULT_MODEL_CONFIG)
     parser.add_argument("--model_state_dict", default=DEFAULT_MODEL_WEIGHTS)
@@ -51,13 +51,20 @@ def run_inference(args):
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
-    ds = NanopolishDS(input_dir, MIN_READS, NORM_PATH, mode='Inference')
+    if len(input_dir) == 1:
+        input_dir = input_dir[0]
+        ds = NanopolishDS(input_dir, MIN_READS, NORM_PATH, mode='Inference')
+    else:
+        ds = NanopolishReplicateDS(input_dir, MIN_READS, NORM_PATH, mode='Inference')
+
     dl = DataLoader(ds, num_workers=num_workers, collate_fn=inference_collate, batch_size=batch_size, worker_init_fn=random_fn, shuffle=False)
     result_df = ds.data_info[["transcript_id", "transcript_position", "n_reads"]].copy(deep=True)   
-    results = inference(model, dl, device, num_iterations)
+    results, kmers, debug = inference(model, dl, device, num_iterations)
     result_df["probability_modified"] = results 
+    result_df["kmer"] = kmers
     result_df.to_csv(os.path.join(out_dir, "data.result.csv.gz"), index=False)
-
+    debug.to_csv(os.path.join(out_dir, "debug.csv.gz"), index=False)
+    
 def main():
     args = argparser().parse_args()
     run_inference(args)
