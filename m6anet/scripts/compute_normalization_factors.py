@@ -3,6 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 from multiprocessing import Pool
+from tqdm import tqdm
 import joblib
 import json
 
@@ -100,9 +101,11 @@ def main():
     info_df = info_df[info_df["set_type"] == 'Train']
     index_df = pd.read_csv(os.path.join(input_dir, "data.index"))
     
+    index_df["transcript_position"] = index_df["transcript_position"].astype('int')
+    info_df["transcript_position"] = info_df["transcript_position"].astype('int')
+
     merged_df = info_df.merge(index_df, on=["transcript_id", "transcript_position"])
     merged_df = annotate_kmer_information(data_fpath, merged_df, n_processes)
-
 
     if not os.path.exists(save_dir):
         os.mkdir(save_dir)

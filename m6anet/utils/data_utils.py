@@ -76,7 +76,7 @@ class NanopolishDS(Dataset):
             read_count = read_count[read_count["set_type"] == self.mode].reset_index(drop=True)
 
         data_info = data_index.merge(read_count, on=["transcript_id", "transcript_position"])
-        self.data_fpath = os.path.join(root_dir, "data.json")
+        self.data_fpath = os.path.join(fpath, "data.json")
         self.data_info = data_info[data_info["n_reads"] >= min_reads].reset_index(drop=True)
 
     def __len__(self):

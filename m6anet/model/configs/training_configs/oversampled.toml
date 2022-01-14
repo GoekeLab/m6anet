@@ -2,9 +2,9 @@
 loss_function_type = "binary_cross_entropy_loss"
 
 [dataset]
-root_dir = "/home/christopherhendra/m6anet_test/demo2/"
+root_dir = "/home/christopher/hct116_dataprep_5_neighbors/"
 min_reads = 20
-norm_path = "/home/christopherhendra/m6anet/m6anet/model/norm_factors/norm_dict.joblib"   
+norm_path = "/home/christopher/m6anet/m6anet/model/norm_factors/norm_dict.joblib"   
 num_neighboring_features = 1
 
 [dataloader]
