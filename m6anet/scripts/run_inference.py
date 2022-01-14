@@ -59,11 +59,10 @@ def run_inference(args):
 
     dl = DataLoader(ds, num_workers=num_workers, collate_fn=inference_collate, batch_size=batch_size, worker_init_fn=random_fn, shuffle=False)
     result_df = ds.data_info[["transcript_id", "transcript_position", "n_reads"]].copy(deep=True)   
-    results, kmers, debug = inference(model, dl, device, num_iterations)
+    results, kmers = inference(model, dl, device, num_iterations)
     result_df["probability_modified"] = results 
     result_df["kmer"] = kmers
     result_df.to_csv(os.path.join(out_dir, "data.result.csv.gz"), index=False)
-    debug.to_csv(os.path.join(out_dir, "debug.csv.gz"), index=False)
     
 def main():
     args = argparser().parse_args()

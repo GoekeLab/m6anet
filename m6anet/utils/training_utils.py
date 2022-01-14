@@ -185,7 +185,6 @@ def inference(model, dl, device, n_iterations=1):
     all_y_pred = []
     all_kmers = None
     kmer_maps = dl.dataset.int_to_kmer
-    data_info_debug = dl.dataset.data_info_debug
     with torch.no_grad():
         for _ in range(n_iterations):
             kmers = []
@@ -207,4 +206,4 @@ def inference(model, dl, device, n_iterations=1):
 
             if all_kmers is None:
                 all_kmers = np.concatenate(kmers)
-    return np.mean(all_y_pred, axis=0), all_kmers, data_info_debug
+    return np.mean(all_y_pred, axis=0), all_kmers
