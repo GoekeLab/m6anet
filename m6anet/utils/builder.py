@@ -4,15 +4,32 @@ import datetime
 from torch import nn
 from torch.utils.data import DataLoader
 from functools import partial
-from .data_utils import NanopolishDS, train_collate
+from .data_utils import NanopolishDS, NanopolishReplicateDS, train_collate
 
 
 def random_fn(x):
     np.random.seed(datetime.datetime.now().second)
 
 
+def build_dataset(config, mode=None):
+    root_dir = config['root_dir']
+    if isinstance(root_dir, list):
+        if len(root_dir) > 1:
+            return NanopolishReplicateDS(**config, mode=mode)
+        else:
+            raise ValueError("root_dir is a list but of size 1, please pass root_dir as a string instead")
+    elif isinstance(root_dir, str):
+        return NanopolishDS(**config, mode=mode)
+    else:
+        raise ValueError("Invalid type for argument root_dir")
+    
+
 def build_dataloader(train_config, num_workers, verbose=True):
     
+    train_ds = build_dataset(train_config["dataset"], mode='Train')
+    val_ds = build_dataset(train_config["dataset"], mode='Val')
+    test_ds = build_dataset(train_config["dataset"], mode='Test')
+
     train_ds = NanopolishDS(**train_config["dataset"], mode='Train')
     val_ds = NanopolishDS(**train_config["dataset"], mode='Val')
     test_ds = NanopolishDS(**train_config["dataset"], mode='Test')
