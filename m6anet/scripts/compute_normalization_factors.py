@@ -28,6 +28,29 @@ def get_mean_std(task):
     return kmer, mean, stds
 
 
+def get_mean_std_replicates(task):
+    kmer, site_df = task
+    n_reads = 0
+    sum_X = []
+    sum_X2 = []
+    for _, row in site_df.iterrows():
+        tx_id, tx_pos = row["transcript_id"], row["transcript_position"]
+        coords, fpaths, segment_number = row["coords"], row["fpath"], row["segment_number"]
+        for coord, fpath in zip(coords, fpaths):
+            start_pos, end_pos = coord
+            features = read_features(os.path.join(fpath, "data.json"), tx_id, tx_pos, start_pos, end_pos)
+            indices = np.arange(3 * segment_number, 3 * (segment_number + 1))
+            signals = features[:, indices]
+            sum_X.append(np.sum(signals, axis=0))
+            sum_X2.append(np.sum(np.square(signals), axis=0))
+        
+        n_reads += row["n_reads"]
+
+    mean = np.sum(sum_X, axis=0) / n_reads
+    stds = np.sqrt((np.sum(sum_X2, axis=0) / n_reads) - mean ** 2)
+    return kmer, mean, stds
+
+
 def read_kmer(task):
     data_fpath, tx_id, tx_pos, start_pos, end_pos = task
     with open(data_fpath) as f:
