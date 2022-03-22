@@ -120,10 +120,10 @@ class NanopolishDS(Dataset):
             return features, kmer
         else:
             return features, kmer, self.data_info.iloc[idx]["modification_status"]
-
+    
     def get_norm_factor(self, list_of_kmers):
         norm_mean, norm_std = [], []
-        for kmer in list_of_kmers:
+        for kmer in list_of_kmers:  
             mean, std = self.norm_dict[kmer]
             norm_mean.append(mean)
             norm_std.append(std)
