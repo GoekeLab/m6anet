@@ -5,7 +5,7 @@ from .pooling_blocks import SigmoidMaxPooling, SigmoidMeanPooling, SigmoidProdPo
 
 
 __all__ = [
-    'ConcatenateFeatures', 'ExtractSignal', 
-    'DeaggregateNanopolish', 'Flatten', 'KmerMultipleEmbedding', 'Linear', 'SummaryStatsAggregator', 'ProbabilityAttention', 'SummaryStatsProbability',
+
+    'ConcatenateFeatures', 'DeaggregateNanopolish', 'Flatten', 'ExtractSignal', 'KmerMultipleEmbedding', 'Linear', 'SummaryStatsAggregator', 'ProbabilityAttention', 'SummaryStatsProbability',
     'Attention', 'GatedAttention', 'KDELayer', 'KDEAttentionLayer', 'KDEGatedAttentionLayer', 'SigmoidMaxPooling', 'SigmoidMeanPooling', 'SigmoidProdPooling', 'MeanAggregator'
 ]

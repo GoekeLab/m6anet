@@ -90,7 +90,10 @@ def train_and_save(args):
         else:
             best_model = (np.argmax(val_loss) + 1) * save_per_epoch
 
-        model.load_state_dict(torch.load(os.path.join(save_dir, "model_states", str(best_model), "model_states.pt")))
+        state_dict = torch.load(os.path.join(save_dir, "model_states", str(best_model), "model_states.pt"))
+        torch.save(state_dict, os.path.join(save_dir, "{}.pt".format(selection_criterion)))
+
+        model.load_state_dict(state_dict)
         test_results = validate(model, test_dl, device, criterion, n_iterations)
         print("Criteria: {criteria} \t"
               "Compute time: {compute_time:.3f}".format(criteria=selection_criterion, compute_time=test_results["compute_time"]))
@@ -100,7 +103,7 @@ def train_and_save(args):
                                                  roc_auc=test_results["roc_auc"],
                                                  pr_auc=test_results["pr_auc"]))
         print("=====================================")
-        joblib.dump(val_results, os.path.join(save_dir, "test_results_{}.joblib".format(selection_criterion)))   
+        joblib.dump(test_results, os.path.join(save_dir, "test_results_{}.joblib".format(selection_criterion)))   
 
 
 def main():
