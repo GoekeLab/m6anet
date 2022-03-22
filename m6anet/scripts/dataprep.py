@@ -27,6 +27,8 @@ def get_args():
     optional.add_argument('--chunk_size', dest='chunk_size', help='number of lines from nanopolish eventalign.txt for processing.',type=int, default=1000000)
     optional.add_argument('--readcount_min', dest='readcount_min', help='minimum read counts per gene.',type=int, default=1)
     optional.add_argument('--readcount_max', dest='readcount_max', help='maximum read counts per gene.',type=int, default=1000)
+    optional.add_argument('--min_segment_count', dest='min_segment_count', help='minimum read counts per candidate segment.',type=int, default=1)
+
     optional.add_argument('--skip_index', dest='skip_index', help='with this argument the program will skip indexing eventalign.txt first.',default=False,action='store_true')
     optional.add_argument('--n_neighbors', dest='n_neighbors', help='number of neighboring features to extract.',type=int, default=NUM_NEIGHBORING_FEATURES)
 
@@ -189,7 +191,7 @@ def combine(events_str):
         return np.array([])
 
 
-def parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min,readcount_max, n_neighbors):
+def parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min,readcount_max, n_neighbors, min_segment_count):
     
     # Create output paths and locks.
     out_paths,locks = dict(),dict()
@@ -223,7 +225,7 @@ def parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min
         for tx_id in tx_ids:
             data_dict = dict()
             readcount = 0
-            for _,row in df_eventalign_index.loc[[tx_id]].iterrows():
+            for _,row in df_eventalign_index.loc[[tscx_id]].iterrows():
                 read_index,pos_start,pos_end = row['read_index'],row['pos_start'],row['pos_end']
                 eventalign_result.seek(pos_start,0)
                 events_str = eventalign_result.read(pos_end-pos_start)
@@ -234,7 +236,7 @@ def parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min
                 if readcount > readcount_max:
                     break
             if readcount>=readcount_min:
-                task_queue.put((tx_id,data_dict,n_neighbors,out_paths)) # Blocked if necessary until a free slot is available. 
+                task_queue.put((tx_id,data_dict,n_neighbors, min_segment_count, out_paths)) # Blocked if necessary until a free slot is available. 
 
 
     # Put the stop task into task_queue.
@@ -244,7 +246,7 @@ def parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min
     task_queue.join()
     
 
-def preprocess_tx(tx_id,data_dict,n_neighbors,out_paths,locks):  # todo
+def preprocess_tx(tx_id, data_dict, n_neighbors, min_segment_count, out_paths, locks):  # todo
     """
     Convert transcriptomic to genomic coordinates for a gene.
     
@@ -303,8 +305,8 @@ def preprocess_tx(tx_id,data_dict,n_neighbors,out_paths,locks):  # todo
         assert(len(kmer) == 1)
         if (len(set(reference_kmer_array)) == 1) and ('XXXXX' in set(reference_kmer_array)) or (len(features_array) == 0):
             continue
-
-        data[int(position)] = {kmer.pop(): features_array.tolist()}
+        if len(features_array) >= min_segment_count:
+            data[int(position)] = {kmer.pop(): features_array.tolist()}
 
     # write to file.
     log_str = '%s: Data preparation ... Done.' %(tx_id)
@@ -342,11 +344,12 @@ def main():
     readcount_max = args.readcount_max
     skip_index = args.skip_index
     n_neighbors = args.n_neighbors
+    min_segment_count = args.min_segment_count
     misc.makedirs(out_dir) #todo: check every level.
     # For each read, combine multiple events aligned to the same positions, the results from nanopolish eventalign, into a single event per position.
     if not skip_index:
         parallel_index(eventalign_filepath,chunk_size,out_dir,n_processes)
-    parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min,readcount_max, n_neighbors)
+    parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min,readcount_max, n_neighbors, min_segment_count)
 
 if __name__ == '__main__':
     main()
