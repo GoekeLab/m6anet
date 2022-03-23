@@ -225,7 +225,7 @@ def parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min
         for tx_id in tx_ids:
             data_dict = dict()
             readcount = 0
-            for _,row in df_eventalign_index.loc[[tscx_id]].iterrows():
+            for _,row in df_eventalign_index.loc[[tx_id]].iterrows():
                 read_index,pos_start,pos_end = row['read_index'],row['pos_start'],row['pos_end']
                 eventalign_result.seek(pos_start,0)
                 events_str = eventalign_result.read(pos_end-pos_start)

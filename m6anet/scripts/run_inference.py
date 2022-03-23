@@ -26,6 +26,7 @@ def argparser():
     parser.add_argument("--out_dir", default=None, required=True)
     parser.add_argument("--model_config", default=DEFAULT_MODEL_CONFIG)
     parser.add_argument("--model_state_dict", default=DEFAULT_MODEL_WEIGHTS)
+    parser.add_argument("--norm_path", default=NORM_PATH)
     parser.add_argument("--batch_size", default=64, type=int)
     parser.add_argument("--n_processes", default=25, type=int)
     parser.add_argument("--num_iterations", default=5, type=int)
@@ -35,31 +36,24 @@ def argparser():
 
 def run_inference(args):
     
-    device = args.device
-    num_workers = args.n_processes
     input_dir = args.input_dir
     out_dir = args.out_dir
-    num_iterations = args.num_iterations
-    batch_size = args.batch_size
-    device = args.device
-    model_config = toml.load(args.model_config)
-    model_state_dict = torch.load(args.model_state_dict, map_location=torch.device(device))
 
-    model = MILModel(model_config).to(device)
-    model.load_state_dict(model_state_dict)
+    model = MILModel(toml.load(args.model_config)).to(args.device)
+    model.load_state_dict(torch.load(args.model_state_dict, map_location=torch.device(args.device)))
 
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
     if len(input_dir) == 1:
         input_dir = input_dir[0]
-        ds = NanopolishDS(input_dir, MIN_READS, NORM_PATH, mode='Inference')
+        ds = NanopolishDS(input_dir, MIN_READS, args.norm_path, mode='Inference')
     else:
-        ds = NanopolishReplicateDS(input_dir, MIN_READS, NORM_PATH, mode='Inference')
+        ds = NanopolishReplicateDS(input_dir, MIN_READS, args.norm_path, mode='Inference')
 
-    dl = DataLoader(ds, num_workers=num_workers, collate_fn=inference_collate, batch_size=batch_size, worker_init_fn=random_fn, shuffle=False)
+    dl = DataLoader(ds, num_workers=args.n_processes, collate_fn=inference_collate, batch_size=args.batch_size, worker_init_fn=random_fn, shuffle=False)
     result_df = ds.data_info[["transcript_id", "transcript_position", "n_reads"]].copy(deep=True)   
-    results, kmers = inference(model, dl, device, num_iterations)
+    results, kmers = inference(model, dl, args.device, args.num_iterations)
     result_df["probability_modified"] = results 
     result_df["kmer"] = kmers
     result_df.to_csv(os.path.join(out_dir, "data.result.csv.gz"), index=False)
