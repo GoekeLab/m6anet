@@ -1,22 +1,49 @@
 import pandas as pd
 import numpy as np
 import datetime
+from copy import deepcopy
 from torch import nn
 from torch.utils.data import DataLoader
 from functools import partial
-from .data_utils import NanopolishDS, train_collate
+from .data_utils import NanopolishDS, NanopolishReplicateDS, train_collate
 
 
 def random_fn(x):
     np.random.seed(datetime.datetime.now().second)
 
 
+def build_dataset(config, mode=None):
+    if 'root_dir' in config:
+        root_dir = config['root_dir']
+        if isinstance(root_dir, list):
+            if len(root_dir) > 1:
+                return NanopolishReplicateDS(**config, mode=mode)
+            else:
+                raise ValueError("root_dir is a list but of size 1, please pass root_dir as a string instead")
+        elif isinstance(root_dir, str):
+            return NanopolishDS(**config, mode=mode)
+        else:
+            raise ValueError("Invalid type for argument root_dir")
+    else:
+        if 'data_info' not in config:
+            raise ValueError("Must pass either root_dir or data_info in toml files")
+
+        if 'replicate' not in config:
+            return NanopolishDS(**config, mode=mode)
+        else:
+            config = deepcopy(config)
+            replicate = config.pop('replicate')
+            if replicate:
+                return NanopolishReplicateDS(**config, mode=mode)
+            else:
+                return NanopolishDS(**config, mode=mode)
+
 def build_dataloader(train_config, num_workers, verbose=True):
     
-    train_ds = NanopolishDS(**train_config["dataset"], mode='Train')
-    val_ds = NanopolishDS(**train_config["dataset"], mode='Val')
-    test_ds = NanopolishDS(**train_config["dataset"], mode='Test')
-    
+    train_ds = build_dataset(train_config["dataset"], mode='Train')
+    val_ds = build_dataset(train_config["dataset"], mode='Val')
+    test_ds = build_dataset(train_config["dataset"], mode='Test')
+
     if verbose:
         print("There are {} train sites".format(len(train_ds)))
         print("There are {} val sites".format(len(val_ds)))

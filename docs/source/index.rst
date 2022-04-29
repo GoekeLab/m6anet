@@ -14,6 +14,8 @@ m6anet requires Python version 3.8 or higher. To install the latest release with
 See our :ref:`Installation page <installation>` for details.
 
 To detect m6A modifications from your direct RNA sequencing sample, you can follow the instructions in our :ref:`Quickstart page <quickstart>`.
+m6Anet is trained on dataset sequenced using the SQK-RNA002 kit and has been validated on dataset from SQK-RNA001 kit. 
+Newer pore version might alter the raw squiggle and affect segmentation and classification results and in such cases m6Anet might need to be retrained.
 
 Contents
 --------------------------

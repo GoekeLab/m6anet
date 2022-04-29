@@ -2,8 +2,7 @@ import numpy as np
 import os
 import torch
 import time
-from collections import Iterable
-from torch import nn
+from collections import OrderedDict
 from sklearn.metrics import accuracy_score, roc_curve, precision_recall_curve, auc
 from torch.nn.utils import clip_grad_norm_
 
@@ -184,11 +183,18 @@ def inference(model, dl, device, n_iterations=1):
     """
     model.eval()
     all_y_pred = []
+    all_kmers = None
+    kmer_maps = dl.dataset.int_to_kmer
     with torch.no_grad():
         for _ in range(n_iterations):
+            kmers = []
             y_pred_tmp = []
             for batch in dl:
-                X = {key: val.to(device) for key, val in batch.items()}
+                X = OrderedDict({key: val.to(device) for key, val in batch.items()})
+
+                if all_kmers is None:
+                    kmers.append([kmer_maps[x[0][x.shape[-1] // 2].item()] for x in X['kmer']])
+
                 y_pred = model(X)
                 y_pred = y_pred.detach().cpu().numpy()
                 if (len(y_pred.shape) == 1) or (y_pred.shape[1] == 1):
@@ -197,4 +203,31 @@ def inference(model, dl, device, n_iterations=1):
                     y_pred_tmp.extend(y_pred[:, 1])
 
             all_y_pred.append(y_pred_tmp)
-    return np.mean(all_y_pred, axis=0)
+
+            if all_kmers is None:
+                all_kmers = np.concatenate(kmers)
+    return np.mean(all_y_pred, axis=0), all_kmers
+
+
+def group_probs(probs, n_reads):
+    i = 0
+    grouped_probs = []
+    for n_read in n_reads:
+        grouped_probs.append(probs[i: i + n_read])
+        i += n_read
+    return grouped_probs
+
+
+def infer_mod_ratio(model, mod_ratio_dl, device, read_proba_threshold):
+    model.eval()
+    with torch.no_grad():
+        read_probs, read_lengths = [], []
+        for data in iter(mod_ratio_dl):
+            features, kmers, n_reads = data
+            features = model.get_read_representation({'X': features.to(device), 'kmer': kmers.to(device)})
+            probs = model.pooling_filter.probability_layer(features).flatten()
+            read_probs.append(probs.detach().cpu().numpy())
+            read_lengths.append(n_reads.numpy())
+            
+        read_probs = group_probs(np.concatenate(read_probs), np.concatenate(read_lengths))
+        return np.array([np.mean(x >= read_proba_threshold) for x in read_probs])

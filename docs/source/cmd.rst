@@ -18,11 +18,12 @@ Argument name                       Required    Default value         Descriptio
 --eventalign=FILE                   Yes         NA                    Eventalign filepath, the output from nanopolish.         
 --out_dir=DIR                       Yes         NA                    Output directory.
 --n_processes=NUM                   No          1                     Number of processes to run.
---chunk_size                        No          1000000               chunksize argument for pandas read csv function on the eventalign input
+--chunk_size=NUM                    No          1000000               chunksize argument for pandas read csv function on the eventalign input
 --readcount_max=NUM                 No          1000                  Maximum read counts per gene.
 --readcount_min=NUM                 No          1                     Minimum read counts per gene.
 --index                             No          True                  To skip indexing the eventalign nanopolish output, can only be used if the index has been created before
---n_neighbors                       No          1                     The number of flanking positions to process
+--n_neighbors=NUM                   No          1                     The number of flanking positions to process
+--min_segment_count=NUM             No          1                     Minimum read counts over each candidate m6A segment
 =================================   ==========  ===================  ============================================================================================================
 
 * Output
@@ -43,17 +44,19 @@ data.readcount          csv             Summary of readcounts per gene.
 
 Output files from ``m6anet-dataprep``.
 
-=======================  ==========  ========================= ==============================================================================
-Argument name             Required    Default value             Description
-=======================  ==========  ========================= ==============================================================================
---input_dir=DIR           Yes         NA                        Input directory that contains data.json, data.index, and data.readcount from m6anet-dataprep
---out_dir=DIR             Yes         NA                        Output directory for the inference results from m6anet
---model_config=FILE       No          prod_pooling.toml         Model architecture specifications. Please see examples in m6anet/model/configs/model_configs/prod_pooling.toml
---model_state_dict=FILE   No          prod_pooling_pr_auc.pt    Model weights to be used for inference. Please see examples in m6anet/model/model_states/
---batch_size              No          64                        Number of sites to be loaded each time for inference
---n_processes=NUM         No          1                         Number of processes to run.
---num_iterations=NUM      No          5                         Number of times m6anet iterates through each potential m6a sites.
-=======================  ==========  ========================= ==============================================================================
+==========================    ==========  ========================= ==============================================================================
+Argument name                 Required    Default value             Description
+==========================    ==========  ========================= ==============================================================================
+--input_dir=DIR               Yes         NA                        Input directory that contains data.json, data.index, and data.readcount from m6anet-dataprep
+--out_dir=DIR                 Yes         NA                        Output directory for the inference results from m6anet
+--model_config=FILE           No          prod_pooling.toml         Model architecture specifications. Please see examples in m6anet/model/configs/model_configs/prod_pooling.toml
+--model_state_dict=FILE       No          prod_pooling_pr_auc.pt    Model weights to be used for inference. Please see examples in m6anet/model/model_states/
+--batch_size=NUM              No          64                        Number of sites to be loaded each time for inference
+--n_processes=NUM             No          1                         Number of processes to run.
+--num_iterations=NUM          No          5                         Number of times m6anet iterates through each potential m6a sites.
+--infer_mod_rate              No          False                     Whether to output m6A modification stoichiometry for each candidate site
+--read_proba_threshold=NUM    No          0.033379376               Threshold for each individual read to be considered modified during stoichiometry calculation
+==========================    ==========  ========================= ==============================================================================
 
 * Output
 

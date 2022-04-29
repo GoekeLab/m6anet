@@ -46,6 +46,15 @@ class ConcatenateFeatures(Block):
         return x
 
 
+class ExtractSignal(Block):
+
+    def __init__(self):
+        super(ExtractSignal, self).__init__()
+
+    def forward(self, x):
+        return x['X']
+
+
 class DeaggregateNanopolish(Block):
 
     def __init__(self, num_neighboring_features, n_features=3):

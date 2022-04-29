@@ -3,6 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 from multiprocessing import Pool
+from tqdm import tqdm
 import joblib
 import json
 
@@ -22,6 +23,29 @@ def get_mean_std(task):
         sum_X.append(np.sum(signals, axis=0))
         sum_X2.append(np.sum(np.square(signals), axis=0))
     
+    mean = np.sum(sum_X, axis=0) / n_reads
+    stds = np.sqrt((np.sum(sum_X2, axis=0) / n_reads) - mean ** 2)
+    return kmer, mean, stds
+
+
+def get_mean_std_replicates(task):
+    kmer, site_df = task
+    n_reads = 0
+    sum_X = []
+    sum_X2 = []
+    for _, row in site_df.iterrows():
+        tx_id, tx_pos = row["transcript_id"], row["transcript_position"]
+        coords, fpaths, segment_number = row["coords"], row["fpath"], row["segment_number"]
+        for coord, fpath in zip(coords, fpaths):
+            start_pos, end_pos = coord
+            features = read_features(os.path.join(fpath, "data.json"), tx_id, tx_pos, start_pos, end_pos)
+            indices = np.arange(3 * segment_number, 3 * (segment_number + 1))
+            signals = features[:, indices]
+            sum_X.append(np.sum(signals, axis=0))
+            sum_X2.append(np.sum(np.square(signals), axis=0))
+        
+        n_reads += row["n_reads"]
+
     mean = np.sum(sum_X, axis=0) / n_reads
     stds = np.sqrt((np.sum(sum_X2, axis=0) / n_reads) - mean ** 2)
     return kmer, mean, stds
@@ -100,9 +124,11 @@ def main():
     info_df = info_df[info_df["set_type"] == 'Train']
     index_df = pd.read_csv(os.path.join(input_dir, "data.index"))
     
+    index_df["transcript_position"] = index_df["transcript_position"].astype('int')
+    info_df["transcript_position"] = info_df["transcript_position"].astype('int')
+
     merged_df = info_df.merge(index_df, on=["transcript_id", "transcript_position"])
     merged_df = annotate_kmer_information(data_fpath, merged_df, n_processes)
-
 
     if not os.path.exists(save_dir):
         os.mkdir(save_dir)

@@ -14,7 +14,7 @@ setup(
     name=__pkg_name__,
     license="MIT",
     description='m6anet is a python package for detection of m6a modifications from Nanopore direct RNA sequencing data.',
-    version='v1.0.0',
+    version='v1.2.0',
     long_description=README,
     url='https://github.com/GoekeLab/m6anet',
     packages=find_packages(),
@@ -32,6 +32,7 @@ setup(
     entry_points={'console_scripts': ["m6anet-dataprep={}.scripts.dataprep:main".format(__pkg_name__),
                                       "m6anet-run_inference={}.scripts.run_inference:main".format(__pkg_name__),
                                       "m6anet-compute_norm_factors={}.scripts.compute_normalization_factors:main".format(__pkg_name__),
+                                      "m6anet-cross_validate={}.scripts.cross_validate:main".format(__pkg_name__),
                                       "m6anet-train={}.scripts.train:main".format(__pkg_name__)]},
     classifiers=[
         # Trove classifiers
