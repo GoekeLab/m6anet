@@ -207,3 +207,27 @@ def inference(model, dl, device, n_iterations=1):
             if all_kmers is None:
                 all_kmers = np.concatenate(kmers)
     return np.mean(all_y_pred, axis=0), all_kmers
+
+
+def group_probs(probs, n_reads):
+    i = 0
+    grouped_probs = []
+    for n_read in n_reads:
+        grouped_probs.append(probs[i: i + n_read])
+        i += n_read
+    return grouped_probs
+
+
+def infer_mod_ratio(model, mod_ratio_dl, device, read_proba_threshold):
+    model.eval()
+    with torch.no_grad():
+        read_probs, read_lengths = [], []
+        for data in iter(mod_ratio_dl):
+            features, kmers, n_reads = data
+            features = model.get_read_representation({'X': features.to(device), 'kmer': kmers.to(device)})
+            probs = model.pooling_filter.probability_layer(features).flatten()
+            read_probs.append(probs.detach().cpu().numpy())
+            read_lengths.append(n_reads.numpy())
+            
+        read_probs = group_probs(np.concatenate(read_probs), np.concatenate(read_lengths))
+        return np.array([np.mean(x >= read_proba_threshold) for x in read_probs])

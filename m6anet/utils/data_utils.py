@@ -17,6 +17,7 @@ class NanopolishDS(Dataset):
 
     def __init__(self, root_dir=None, min_reads=20, norm_path=None, site_info=None,
                  num_neighboring_features=1, mode='Inference', site_mode=False,
+                 sample=True,
                  n_processes=1, data_info=None):
         allowed_mode = ('Train', 'Test', 'Val', 'Inference')
         
@@ -30,6 +31,7 @@ class NanopolishDS(Dataset):
         self.site_info = site_info
         self.min_reads = min_reads
         self.site_mode = site_mode
+        self.sample = sample
 
         if data_info is None:
             self.initialize_data_info(root_dir, min_reads)
@@ -92,6 +94,9 @@ class NanopolishDS(Dataset):
         self.data_fpath = os.path.join(fpath, "data.json")
         self.data_info = data_info[data_info["n_reads"] >= min_reads].reset_index(drop=True)
 
+    def set_to_return_all_reads(self):
+        self.sample = False
+
     def __len__(self):
         return len(self.data_info)
 
@@ -114,7 +119,9 @@ class NanopolishDS(Dataset):
         kmer = self._retrieve_full_sequence(kmer, self.num_neighboring_features)
         kmer = [kmer[i:i+5] for i in range(2 * self.num_neighboring_features + 1)]
 
-        features = features[np.random.choice(len(features), self.min_reads, replace=False), :]
+        if self.sample:
+            features = features[np.random.choice(len(features), self.min_reads, replace=False), :]
+        
         features = features[:, self.indices]
         
         if self.norm_dict is not None:
@@ -125,7 +132,7 @@ class NanopolishDS(Dataset):
 
         if not self.site_mode:
             kmer = np.repeat(np.array([self.kmer_to_int[kmer] for kmer in kmer])\
-                        .reshape(-1, 2 * self.num_neighboring_features + 1), self.min_reads, axis=0)
+                        .reshape(-1, 2 * self.num_neighboring_features + 1), len(features), axis=0)
             kmer = torch.Tensor(kmer)
         else:
             kmer = torch.LongTensor([self.kmer_to_int[kmer] for kmer in kmer])
@@ -164,10 +171,11 @@ class NanopolishReplicateDS(NanopolishDS):
 
     def __init__(self, root_dirs=None, min_reads=20, norm_path=None, site_info=None,
                  num_neighboring_features=1, mode='Inference', site_mode=False,
+                 sample=True,
                  data_info=None,
                  n_processes=1):
         super().__init__(root_dirs, min_reads, norm_path, site_info,
-                         num_neighboring_features, mode, site_mode,
+                         num_neighboring_features, mode, site_mode, sample,
                          n_processes, data_info)
     
     def prepare_data_info(self, data_info):
@@ -418,6 +426,13 @@ class ImbalanceKmerOverSampler(torch.utils.data.Sampler):
 
     def __len__(self):
         return self.length
+
+
+def all_reads_collate(batch):
+    n_reads = torch.tensor([len(item[0]) for item in batch])
+    features = torch.cat([item[0] for item in batch])
+    kmers = torch.cat([item[1] for item in batch])
+    return features, kmers, n_reads
 
 
 def inference_collate(batch):

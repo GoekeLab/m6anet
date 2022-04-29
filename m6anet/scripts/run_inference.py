@@ -7,8 +7,8 @@ from argparse import ArgumentDefaultsHelpFormatter
 from copy import deepcopy
 from ..model.model import MILModel
 from ..utils.builder import random_fn
-from ..utils.data_utils import NanopolishDS, NanopolishReplicateDS, inference_collate
-from ..utils.training_utils import inference
+from ..utils.data_utils import NanopolishDS, NanopolishReplicateDS, inference_collate, all_reads_collate
+from ..utils.training_utils import inference, infer_mod_ratio
 from torch.utils.data import DataLoader
 
 
@@ -16,6 +16,7 @@ DEFAULT_MODEL_CONFIG = pkg_resources.resource_filename('m6anet.model', 'configs/
 DEFAULT_MODEL_WEIGHTS = pkg_resources.resource_filename('m6anet.model', 'model_states/prod_pooling_pr_auc.pt')
 NORM_PATH = pkg_resources.resource_filename('m6anet.model', 'norm_factors/norm_dict.joblib')
 MIN_READS = 20
+DEFAULT_READ_THRESHOLD = 0.033379376
 
 def argparser():
     parser = ArgumentParser(
@@ -31,6 +32,9 @@ def argparser():
     parser.add_argument("--n_processes", default=25, type=int)
     parser.add_argument("--num_iterations", default=5, type=int)
     parser.add_argument("--device", default='cpu', type=str)
+    parser.add_argument("--infer_mod_rate", default=False, action='store_true')
+    parser.add_argument("--read_proba_threshold", default=DEFAULT_READ_THRESHOLD, type=float)
+
     return parser
 
 
@@ -56,6 +60,11 @@ def run_inference(args):
     results, kmers = inference(model, dl, args.device, args.num_iterations)
     result_df["probability_modified"] = results 
     result_df["kmer"] = kmers
+
+    if args.infer_mod_rate:
+        ds.set_to_return_all_reads()
+        mod_ratio_dl = DataLoader(ds, num_workers=args.n_processes, collate_fn=all_reads_collate, batch_size=args.batch_size, worker_init_fn=random_fn, shuffle=False)
+        result_df["mod_ratio"] = infer_mod_ratio(model, mod_ratio_dl, args.device, args.read_proba_threshold)
     result_df.to_csv(os.path.join(out_dir, "data.result.csv.gz"), index=False)
     
 def main():
