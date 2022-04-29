@@ -2,7 +2,10 @@
 
 Quick Start
 ==================================
-The demo dataset is provided with the repository under from /path/to/m6anet/demo/eventalign.txt
+m6Anet requires eventalign.txt from nanopolish::
+    nanopolish eventalign --reads reads.fastq --bam reads.sorted.bam --genome transcript.fa --scale-events --signal-index --summary /path/to/summary.txt  --threads 50 > /path/to/eventalign.txt
+
+We have also provided a demo dataset in the repository under /path/to/m6anet/demo/eventalign.txt. 
 
 Firstly, we need to preprocess the segmented raw signal file in the form of nanopolish eventalign file using 'm6anet-dataprep'::
 
@@ -19,7 +22,7 @@ The output files are stored in ``/path/to/output``:
 
 Now we can run m6anet over our data using m6anet-run_inference::
 
-    m6anet-run_inference --input_dir demo_data --out_dir demo_data ---n_processes 4
+    m6anet-run_inference --input_dir demo_data --out_dir demo_data --infer_mod-rate --n_processes 4
 
 The output files `demo_data/data.result.csv.gz` contains the probability of modification at each individual position for each transcript. The output file will have 4 columns
 
@@ -27,5 +30,12 @@ The output files `demo_data/data.result.csv.gz` contains the probability of modi
 * ``transcript_position``: The transcript position of the predicted position
 * ``n_reads``: The number of reads for that particular position
 * ``probability_modified``: The probability that a given site is modified
+* ``kmer``: The 5-mer motif of a given site
+* ``mod_ratio``: The estimated percentage of reads in a given site that is modified
 
-The total run time should not exceed 10 minutes on a normal laptop
+The total run time should not exceed 10 minutes on a normal laptop. We also recommend a threshold of 0.9 for selecting m6A sites
+based on the ``probability_modified`` column, which can be relaxed at the expense of having lower model precision.
+
+m6Anet also supports pooling over multiple replicates. To do this, simply input multiple folders containing m6anet-dataprep outputs::
+    
+        m6anet-run_inference --input_dir demo_data_1 demo_data_2 ... --out_dir demo_data --infer_mod-rate --n_processes 4
