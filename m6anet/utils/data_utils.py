@@ -73,9 +73,14 @@ class NanopolishDS(Dataset):
             self.labels = self.data_info["modification_status"].values
 
     def prepare_data_info(self, data_info):
+        fpath = os.path.dirname(data_info)
+        self.data_fpath = os.path.join(fpath, "data.json")
         data_info = pd.read_csv(data_info)
         if self.mode != 'Inference':
             data_info = data_info[data_info["set_type"] == self.mode].reset_index(drop=True)
+
+        data_index = pd.read_csv(os.path.join(fpath ,"data.index"))            
+        data_info = data_index.merge(data_info, on=["transcript_id", "transcript_position"])
         self.data_info = data_info
 
     def initialize_data_info(self, fpath, min_reads):
@@ -238,9 +243,7 @@ class NanopolishReplicateDS(NanopolishDS):
         return all_kmer, all_features
 
     def compute_norm_factors(self, n_processes):
-        if "kmer" not in self.data_info.columns:
-            print("k-mer information is not present in column, annotating k-mer information in data info")
-            kmer_mapping_df = self.annotate_kmer_information(self.data_info, n_processes)
+        kmer_mapping_df = self.annotate_kmer_information(self.data_info, n_processes)
         kmer_mapping_df = self.create_kmer_mapping_df(kmer_mapping_df)
         norm_dict = self.create_norm_dict(kmer_mapping_df, n_processes)
         return norm_dict
