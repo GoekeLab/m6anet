@@ -28,7 +28,6 @@ def get_args():
     optional.add_argument('--readcount_min', dest='readcount_min', help='minimum read counts per gene.',type=int, default=1)
     optional.add_argument('--readcount_max', dest='readcount_max', help='maximum read counts per gene.',type=int, default=1000)
     optional.add_argument('--min_segment_count', dest='min_segment_count', help='minimum read counts per candidate segment.',type=int, default=1)
-
     optional.add_argument('--skip_index', dest='skip_index', help='with this argument the program will skip indexing eventalign.txt first.', default=False, action='store_true')
     optional.add_argument('--n_neighbors', dest='n_neighbors', help='number of neighboring features to extract.',type=int, default=NUM_NEIGHBORING_FEATURES)
 
