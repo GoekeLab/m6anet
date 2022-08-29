@@ -3,6 +3,7 @@
 Quick Start
 ==================================
 m6Anet requires eventalign.txt from nanopolish::
+
     nanopolish eventalign --reads reads.fastq --bam reads.sorted.bam --genome transcript.fa --scale-events --signal-index --summary /path/to/summary.txt  --threads 50 > /path/to/eventalign.txt
 
 We have also provided a demo dataset in the repository under /path/to/m6anet/demo/eventalign.txt. 
@@ -22,7 +23,7 @@ The output files are stored in ``/path/to/output``:
 
 Now we can run m6anet over our data using m6anet-run_inference::
 
-    m6anet-run_inference --input_dir demo_data --out_dir demo_data --infer_mod-rate --n_processes 4
+    m6anet-run_inference --input_dir demo_data --out_dir demo_data --infer_mod_rate --n_processes 4
 
 The output files `demo_data/data.result.csv.gz` contains the probability of modification at each individual position for each transcript. The output file will have 4 columns
 
