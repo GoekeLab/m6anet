@@ -94,6 +94,7 @@ def combine_sequence(kmers):
 
 def index(eventalign_result,pos_start,out_paths,locks):
    eventalign_result = eventalign_result.set_index(['contig','read_index'])
+   eventalign_result = eventalign_result.sort_index()
    pos_end=pos_start
    with locks['index'], open(out_paths['index'],'a') as f_index:
        for index in list(dict.fromkeys(eventalign_result.index)):
@@ -133,14 +134,14 @@ def parallel_index(eventalign_filepath,chunk_size,out_dir,n_processes):
         chunk_concat_size = len(chunk_concat.index)
         ## read the file at where it left off because the file is opened once ##
         lines = [len(eventalign_file.readline()) for i in range(chunk_concat_size)]
-        chunk_concat['line_length'] = np.array(lines)
+        chunk_concat.loc[:, 'line_length'] = np.array(lines)
         task_queue.put((chunk_concat[index_features],pos_start,out_paths))
         pos_start += sum(lines)
-        chunk_split = chunk[chunk['read_index'] == chunk.iloc[-1]['read_index']]
+        chunk_split = chunk[chunk['read_index'] == chunk.iloc[-1]['read_index']].copy()
     ## the loop above leaves off w/o adding the last read_index to eventalign.index
     chunk_split_size = len(chunk_split.index)
     lines = [len(eventalign_file.readline()) for i in range(chunk_split_size)]
-    chunk_split['line_length'] = np.array(lines)
+    chunk_split.loc[:, 'line_length'] = np.array(lines)
     task_queue.put((chunk_split[index_features],pos_start,out_paths))
 
     # Put the stop task into task_queue.
