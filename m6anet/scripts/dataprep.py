@@ -4,6 +4,7 @@ import pandas as pd
 import os
 import multiprocessing 
 import ujson
+import warnings
 from operator import itemgetter
 from collections import defaultdict
 from itertools import groupby
@@ -94,7 +95,6 @@ def combine_sequence(kmers):
 
 def index(eventalign_result,pos_start,out_paths,locks):
    eventalign_result = eventalign_result.set_index(['contig','read_index'])
-   eventalign_result = eventalign_result.sort_index()
    pos_end=pos_start
    with locks['index'], open(out_paths['index'],'a') as f_index:
        for index in list(dict.fromkeys(eventalign_result.index)):
@@ -107,7 +107,7 @@ def parallel_index(eventalign_filepath,chunk_size,out_dir,n_processes):
     # Create output paths and locks.
     out_paths,locks = dict(),dict()
     for out_filetype in ['index']:
-        out_paths[out_filetype] = os.path.join(out_dir,'eventalign.%s' %out_filetype)
+        out_paths[out_filetype] = os.path.join(out_dir,'eventalign.%s'  %out_filetype)
         locks[out_filetype] = multiprocessing.Lock()
     # TO DO: resume functionality for index creation
         
@@ -178,7 +178,7 @@ def combine(events_str):
         eventalign_result['norm_mean'] = (sum_norm_mean/total_length).round(1)
         eventalign_result["norm_std"] = sum_norm_std / total_length
         eventalign_result["dwell_time"] = sum_dwell_time / total_length
-        eventalign_result.reset_index(inplace=True)
+        eventalign_result = eventalign_result.reset_index()
 
 
         eventalign_result['transcript_id'] = eventalign_result['contig']    #### CHANGE MADE ####
@@ -220,7 +220,7 @@ def parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min
     df_eventalign_index['transcript_id'] = df_eventalign_index['transcript_id']
     tx_ids = df_eventalign_index['transcript_id'].values.tolist()
     tx_ids = list(dict.fromkeys(tx_ids))
-    df_eventalign_index.set_index('transcript_id',inplace=True)
+    df_eventalign_index = df_eventalign_index.set_index('transcript_id')
     with open(eventalign_filepath,'r') as eventalign_result:
         for tx_id in tx_ids:
             data_dict = dict()
@@ -347,6 +347,7 @@ def main():
     min_segment_count = args.min_segment_count
     misc.makedirs(out_dir) #todo: check every level.
     # For each read, combine multiple events aligned to the same positions, the results from nanopolish eventalign, into a single event per position.
+    warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
     if not skip_index:
         parallel_index(eventalign_filepath,chunk_size,out_dir,n_processes)
     parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min,readcount_max, n_neighbors, min_segment_count)
