@@ -126,9 +126,8 @@ class NanopolishDS(Dataset):
 
         if self.sample:
             features = features[np.random.choice(len(features), self.min_reads, replace=False), :]
-        
+        read_ids = torch.LongTensor(features[:, -1])
         features = features[:, self.indices]
-        
         if self.norm_dict is not None:
             mean, std = self.get_norm_factor(kmer)
             features = torch.Tensor((features - mean) / std)
@@ -142,7 +141,7 @@ class NanopolishDS(Dataset):
         else:
             kmer = torch.LongTensor([self.kmer_to_int[kmer] for kmer in kmer])
         if self.mode == 'Inference':
-            return features, kmer
+            return features, kmer, read_ids
         else:
             return features, kmer, self.data_info.iloc[idx]["modification_status"]
     
@@ -435,7 +434,8 @@ def all_reads_collate(batch):
     n_reads = torch.tensor([len(item[0]) for item in batch])
     features = torch.cat([item[0] for item in batch])
     kmers = torch.cat([item[1] for item in batch])
-    return features, kmers, n_reads
+    read_ids = torch.cat([item[2] for item in batch])
+    return features, kmers, n_reads, read_ids
 
 
 def inference_collate(batch):

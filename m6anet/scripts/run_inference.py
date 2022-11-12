@@ -2,6 +2,8 @@ import os
 import torch
 import toml
 import pkg_resources
+import numpy as np
+import pandas as pd
 from argparse import ArgumentParser
 from argparse import ArgumentDefaultsHelpFormatter
 from copy import deepcopy
@@ -64,7 +66,18 @@ def run_inference(args):
     if args.infer_mod_rate:
         ds.set_to_return_all_reads()
         mod_ratio_dl = DataLoader(ds, num_workers=args.n_processes, collate_fn=all_reads_collate, batch_size=args.batch_size, worker_init_fn=random_fn, shuffle=False)
-        result_df["mod_ratio"] = infer_mod_ratio(model, mod_ratio_dl, args.device, args.read_proba_threshold)
+        mod_ratio, read_probs, read_ids = infer_mod_ratio(model, mod_ratio_dl, args.device, args.read_proba_threshold)
+        result_df["mod_ratio"] = mod_ratio
+
+        assert(len(read_probs) == len(read_ids) == len(result_df))
+        indiv_read_df = {'transcript_id': [], 'transcript_position': [], 'read_index': [], 'probability_modified': []}
+        for read_prob, read_id, tx_id, tx_pos in zip(read_probs, read_ids, result_df["transcript_id"], result_df["transcript_position"]):
+            indiv_read_df["transcript_id"].extend(np.repeat(tx_id, len(read_prob)))
+            indiv_read_df["transcript_position"].extend(np.repeat(tx_pos, len(read_prob)))
+            indiv_read_df["read_index"].extend(read_id)
+            indiv_read_df['probability_modified'].extend(read_prob)
+        pd.DataFrame(indiv_read_df).to_csv(os.path.join(out_dir, "data.indiv_proba.csv.gz"), index=False)
+
     result_df.to_csv(os.path.join(out_dir, "data.result.csv.gz"), index=False)
     
 def main():

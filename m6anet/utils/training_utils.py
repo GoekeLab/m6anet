@@ -221,13 +221,15 @@ def group_probs(probs, n_reads):
 def infer_mod_ratio(model, mod_ratio_dl, device, read_proba_threshold):
     model.eval()
     with torch.no_grad():
-        read_probs, read_lengths = [], []
+        read_probs, read_lengths, read_ids = [], [], []
         for data in iter(mod_ratio_dl):
-            features, kmers, n_reads = data
+            features, kmers, n_reads, read_id = data
             features = model.get_read_representation({'X': features.to(device), 'kmer': kmers.to(device)})
             probs = model.pooling_filter.probability_layer(features).flatten()
             read_probs.append(probs.detach().cpu().numpy())
             read_lengths.append(n_reads.numpy())
-            
+            read_ids.append(read_id)
+
         read_probs = group_probs(np.concatenate(read_probs), np.concatenate(read_lengths))
-        return np.array([np.mean(x >= read_proba_threshold) for x in read_probs])
+        read_ids = group_probs(np.concatenate(read_ids), np.concatenate(read_lengths))
+        return np.array([np.mean(x >= read_proba_threshold) for x in read_probs]), read_probs, read_ids

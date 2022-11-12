@@ -1,4 +1,5 @@
 import argparse
+from multiprocessing.sharedctypes import Value
 import numpy as np
 import pandas as pd
 import os
@@ -44,26 +45,28 @@ def partition_into_continuous_positions(arr, window_size=1):
     kmer_arr = arr["reference_kmer"].reshape(-1, 1)
     tx_pos_arr = arr["transcriptomic_position"]
     tx_id_arr = arr["transcript_id"]
+    read_id_arr = arr["read_index"]
 
     partitions = [list(map(itemgetter(0), g)) for k, g in groupby(enumerate(tx_pos_arr), 
                                                                   lambda x: x[0] - x[1])]
     return [(float_arr[partition],
-             kmer_arr[partition], tx_id_arr[partition], tx_pos_arr[partition]) 
+             kmer_arr[partition], tx_id_arr[partition], tx_pos_arr[partition], read_id_arr[partition]) 
             for partition in partitions if len(partition) >= 2 * window_size + 1]
 
 def filter_by_kmer(partition, kmers, window_size):
-    feature_arr, kmer_arr, tx_id_arr, tx_pos_arr = partition
+    feature_arr, kmer_arr, tx_id_arr, tx_pos_arr, read_id_arr = partition
     kmers_5 = kmer_arr[:, (2 * window_size + 1) // 2]
     mask = np.isin(kmers_5, kmers)
     filtered_feature_arr = feature_arr[mask, :]
     filtered_kmer_arr = kmer_arr[mask, :]
     filtered_tx_pos_arr = tx_pos_arr[mask]
     filtered_tx_id_arr = tx_id_arr[mask]
+    filtered_read_id_arr = read_id_arr[mask]
 
     if len(filtered_kmer_arr) == 0:
         return []
     else:
-        return filtered_feature_arr, filtered_kmer_arr, filtered_tx_id_arr, filtered_tx_pos_arr
+        return filtered_feature_arr, filtered_kmer_arr, filtered_tx_id_arr, filtered_tx_pos_arr, filtered_read_id_arr
 
 def filter_partitions(partitions, window_size, kmers):
     windowed_partition = [create_features(partition, window_size) for partition in partitions]
@@ -78,9 +81,9 @@ def roll(to_roll, window_size=1):
     return np.concatenate((prev, to_roll, nex), axis=1)[window_size: -window_size, :]
 
 def create_features(partition, window_size=1):
-    float_arr, kmer_arr, tx_id_arr, tx_pos_arr = partition
+    float_arr, kmer_arr, tx_id_arr, tx_pos_arr, read_id_arr = partition
     return roll(float_arr, window_size), roll(kmer_arr, window_size), \
-        tx_id_arr[window_size: -window_size], tx_pos_arr[window_size: -window_size]
+        tx_id_arr[window_size: -window_size], tx_pos_arr[window_size: -window_size], read_id_arr[window_size: -window_size]
 
 def filter_events(events, window_size, kmers):
     events = partition_into_continuous_positions(events)
@@ -272,6 +275,7 @@ def preprocess_tx(tx_id, data_dict, n_neighbors, min_segment_count, out_paths, l
     features_arrays = []
     reference_kmer_arrays = []
     transcriptomic_positions_arrays = []
+    read_ids = []
 
     for _,events_per_read in data_dict.items(): 
         events_per_read = filter_events(events_per_read, n_neighbors, M6A_KMERS)
@@ -279,6 +283,7 @@ def preprocess_tx(tx_id, data_dict, n_neighbors, min_segment_count, out_paths, l
             features_arrays.append(event_per_read[0])
             reference_kmer_arrays.append([combine_sequence(kmer) for kmer in event_per_read[1]])
             transcriptomic_positions_arrays.append(event_per_read[3])
+            read_ids.append(event_per_read[4])
 
     if len(features_arrays) == 0:
         return
@@ -286,13 +291,16 @@ def preprocess_tx(tx_id, data_dict, n_neighbors, min_segment_count, out_paths, l
         features_arrays = np.concatenate(features_arrays)
         reference_kmer_arrays = np.concatenate(reference_kmer_arrays)
         transcriptomic_positions_arrays = np.concatenate(transcriptomic_positions_arrays)
-        assert(len(features_arrays) == len(reference_kmer_arrays) == len(transcriptomic_positions_arrays))
+        read_ids = np.concatenate(read_ids)
+
+        assert(len(features_arrays) == len(reference_kmer_arrays) == len(transcriptomic_positions_arrays) == len(read_ids))
     # Sort and split
 
     idx_sorted = np.argsort(transcriptomic_positions_arrays)
     positions, index = np.unique(transcriptomic_positions_arrays[idx_sorted], return_index = True,axis=0) #'chr',
     features_arrays = np.split(features_arrays[idx_sorted], index[1:])
     reference_kmer_arrays = np.split(reference_kmer_arrays[idx_sorted], index[1:])
+    read_ids = np.split(read_ids[idx_sorted], index[1:])
 
     # Prepare
     # print('Reformating the data for each genomic position ...')
@@ -300,8 +308,9 @@ def preprocess_tx(tx_id, data_dict, n_neighbors, min_segment_count, out_paths, l
 
 
     # for each position, make it ready for json dump
-    for position, features_array, reference_kmer_array in zip(positions, features_arrays, reference_kmer_arrays):
+    for position, features_array, reference_kmer_array, read_id in zip(positions, features_arrays, reference_kmer_arrays, read_ids):
         kmer = set(reference_kmer_array)
+        features_array = np.concatenate([features_array, read_id.reshape(-1, 1)], axis=1)
         assert(len(kmer) == 1)
         if (len(set(reference_kmer_array)) == 1) and ('XXXXX' in set(reference_kmer_array)) or (len(features_array) == 0):
             continue
