@@ -19,7 +19,7 @@ setup(
     url='https://github.com/GoekeLab/m6anet',
     packages=find_packages(),
     package_data={'m6anet.model': ['model_states/prod_pooling_pr_auc.pt', 'configs/model_configs/prod_pooling.toml', 'norm_factors/norm_dict.joblib']},
-    python_requires=">=3.8",
+    python_requires=">=3.7",
     install_requires=[
             'numpy==1.18.0',
             'pandas==0.25.3',
@@ -41,7 +41,7 @@ setup(
         'Development Status :: 1 - Planning',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.7',
         'Topic :: Software Development :: Libraries',
         'Topic :: Scientific/Engineering :: Bio-Informatics',
         'Intended Audience :: Science/Research',
