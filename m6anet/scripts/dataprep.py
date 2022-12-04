@@ -36,7 +36,7 @@ def get_args():
                         type=int, default=1000)
     parser.add_argument('--min_segment_count', dest='min_segment_count',
                         help='minimum read counts per candidate segment.',
-                        type=int, default=1)
+                        type=int, default=20)
     parser.add_argument('--skip_index', dest='skip_index',
                         help='with this argument the program will skip indexing eventalign.txt first.',
                         default=False, action='store_true')

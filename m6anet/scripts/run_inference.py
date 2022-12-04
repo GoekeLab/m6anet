@@ -33,6 +33,7 @@ def argparser():
     parser.add_argument("--n_processes", default=25, type=int)
     parser.add_argument("--num_iterations", default=5, type=int)
     parser.add_argument("--device", default='cpu', type=str)
+    parser.add_argument("--seed", default=0, type=int)
     parser.add_argument("--infer_mod_rate", default=False, action='store_true')
     parser.add_argument("--read_proba_threshold", default=DEFAULT_READ_THRESHOLD, type=float)
 
@@ -43,6 +44,10 @@ def run_inference(args):
 
     input_dir = args.input_dir
     out_dir = args.out_dir
+
+    torch.manual_seed(args.seed)
+    torch.cuda.manual_seed_all(args.seed)
+    np.random.seed(args.seed)
 
     model = MILModel(toml.load(args.model_config)).to(args.device)
     model.load_state_dict(torch.load(args.model_state_dict, map_location=torch.device(args.device)))
