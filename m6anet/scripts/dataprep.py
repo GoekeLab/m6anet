@@ -228,12 +228,9 @@ def parallel_preprocess_tx(eventalign_filepath,out_dir,n_processes,readcount_min
 
     # Create output paths and locks.
     out_paths,locks = dict(),dict()
-    for out_filetype in ['json','info','log', 'read_index']:
+    for out_filetype in ['json','info','log']:
         out_paths[out_filetype] = os.path.join(out_dir, 'data.%s' % out_filetype)
         locks[out_filetype] = multiprocessing.Lock()
-
-    with open(out_paths['read_index'], 'w', encoding='utf-8') as f:
-        f.write('transcript_id,transcript_position,read_index\n') # header
 
     # Writing the starting of the files.
 
@@ -318,7 +315,6 @@ def preprocess_tx(tx_id, data_dict, n_neighbors, min_segment_count, out_paths, l
             features_arrays.append(event_per_read[0])
             reference_kmer_arrays.append([combine_sequence(kmer) for kmer in event_per_read[1]])
             transcriptomic_positions_arrays.append(event_per_read[3])
-
             read_ids.append(event_per_read[4])
 
     if len(features_arrays) == 0:
@@ -327,9 +323,10 @@ def preprocess_tx(tx_id, data_dict, n_neighbors, min_segment_count, out_paths, l
     features_arrays = np.concatenate(features_arrays)
     reference_kmer_arrays = np.concatenate(reference_kmer_arrays)
     transcriptomic_positions_arrays = np.concatenate(transcriptomic_positions_arrays)
+    read_ids = np.concatenate(read_ids)
 
     assert(len(features_arrays) == len(reference_kmer_arrays) == \
-            len(transcriptomic_positions_arrays))
+            len(transcriptomic_positions_arrays) == len(read_ids))
 
     # Sort and split
 
@@ -337,50 +334,40 @@ def preprocess_tx(tx_id, data_dict, n_neighbors, min_segment_count, out_paths, l
     positions, indices = np.unique(transcriptomic_positions_arrays[idx_sorted],
                                    return_index = True,axis=0) #'chr',
 
-    read_ids = np.concatenate(read_ids)
-    assert(len(read_ids) == len(features_arrays))
-    read_ids = np.split(read_ids[idx_sorted], indices[1:])
-
     features_arrays = np.split(features_arrays[idx_sorted], indices[1:])
     reference_kmer_arrays = np.split(reference_kmer_arrays[idx_sorted], indices[1:])
+    read_ids = np.split(read_ids[idx_sorted], indices[1:])
 
     # Prepare
     data = defaultdict(dict)
-    read_idx_dict = {}
 
     # for each position, make it ready for json dump
-    for i, (position, features_array, reference_kmer_array) in \
-            enumerate(zip(positions, features_arrays, reference_kmer_arrays)):
+    for position, features_array, reference_kmer_array, read_id in \
+            zip(positions, features_arrays, reference_kmer_arrays, read_ids):
         kmer = set(reference_kmer_array)
-
+        features_array = np.concatenate([features_array, read_id.reshape(-1, 1)], axis=1)
         assert(len(kmer) == 1)
-
         if (len(set(reference_kmer_array)) == 1) and ('XXXXX' in set(reference_kmer_array)) \
                 or (len(features_array) == 0):
             continue
         if len(features_array) >= min_segment_count:
             data[int(position)] = {kmer.pop(): features_array.tolist()}
 
-        read_idx_dict[int(position)] = read_ids[i].tolist()
-
     # write to file.
     log_str = '%s: Data preparation ... Done.' %(tx_id)
     with locks['json'], open(out_paths['json'],'a', encoding='utf-8') as f:
         with locks['info'], open(out_paths['info'],'a', encoding='utf-8') as g:
-            with locks['read_index'], open(out_paths['read_index'], 'a', encoding='utf-8') as h:
-                for pos, dat in data.items():
-                    pos_start = f.tell()
-                    f.write('{')
-                    f.write('"%s":{"%d":' %(tx_id,pos))
-                    ujson.dump(dat, f)
-                    f.write('}}\n')
-                    pos_end = f.tell()
-                    n_reads = 0
-                    for kmer, features in dat.items():
-                        n_reads += len(features)
-                    g.write('%s,%d,%d,%d,%d\n' %(tx_id,pos,pos_start,pos_end,n_reads))
-                    read_id_per_tx = "|".join([str(x) for x in read_idx_dict[pos]])
-                    h.write('%s,%d,%s\n' %(tx_id,pos,read_id_per_tx))
+            for pos, dat in data.items():
+                pos_start = f.tell()
+                f.write('{')
+                f.write('"%s":{"%d":' %(tx_id,pos))
+                ujson.dump(dat, f)
+                f.write('}}\n')
+                pos_end = f.tell()
+                n_reads = 0
+                for kmer, features in dat.items():
+                    n_reads += len(features)
+                g.write('%s,%d,%d,%d,%d\n' %(tx_id,pos,pos_start,pos_end,n_reads))
 
     with locks['log'], open(out_paths['log'],'a', encoding='utf-8') as f:
         f.write(log_str + '\n')

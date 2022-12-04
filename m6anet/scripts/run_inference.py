@@ -6,11 +6,10 @@ import numpy as np
 import pandas as pd
 from argparse import ArgumentParser
 from argparse import ArgumentDefaultsHelpFormatter
-from copy import deepcopy
 from ..model.model import MILModel
 from ..utils.builder import random_fn
-from ..utils.data_utils import NanopolishDS, NanopolishReplicateDS, inference_collate, all_reads_collate
-from ..utils.training_utils import inference, infer_mod_ratio
+from ..utils.data_utils import NanopolishDS, NanopolishReplicateDS, inference_collate
+from ..utils.inference_utils import inference, calculate_site_proba
 from torch.utils.data import DataLoader
 
 
@@ -41,7 +40,7 @@ def argparser():
 
 
 def run_inference(args):
-    
+
     input_dir = args.input_dir
     out_dir = args.out_dir
 
@@ -58,28 +57,27 @@ def run_inference(args):
         ds = NanopolishReplicateDS(input_dir, MIN_READS, args.norm_path, mode='Inference')
 
     dl = DataLoader(ds, num_workers=args.n_processes, collate_fn=inference_collate, batch_size=args.batch_size, worker_init_fn=random_fn, shuffle=False)
-    result_df = ds.data_info[["transcript_id", "transcript_position", "n_reads"]].copy(deep=True)   
-    results, kmers = inference(model, dl, args.device, args.num_iterations)
-    result_df["probability_modified"] = results 
+    result_df = ds.data_info[["transcript_id", "transcript_position", "n_reads"]].copy(deep=True)
+    mod_ratio, read_probs, read_ids, kmers = inference(model, dl, args.device, args.read_proba_threshold)
+
+    assert(len(read_probs) == len(read_ids) == len(result_df))
+
+    indiv_read_df = {'transcript_id': [], 'transcript_position': [], 'read_index': [], 'probability_modified': []}
+    for read_prob, read_id, tx_id, tx_pos in zip(read_probs, read_ids, result_df["transcript_id"], result_df["transcript_position"]):
+        indiv_read_df["transcript_id"].extend(np.repeat(tx_id, len(read_prob)))
+        indiv_read_df["transcript_position"].extend(np.repeat(tx_pos, len(read_prob)))
+        indiv_read_df["read_index"].extend(read_id)
+        indiv_read_df['probability_modified'].extend(read_prob)
+    indiv_proba_res = pd.DataFrame(indiv_read_df)
+    indiv_proba_res.to_csv(os.path.join(out_dir, "data.indiv_proba.csv.gz"), index=False)
+
+    result_df = result_df.merge(calculate_site_proba(indiv_proba_res, args.num_iterations, 20, args.n_processes),
+                                on=["transcript_id", "transcript_position"])
     result_df["kmer"] = kmers
-
-    if args.infer_mod_rate:
-        ds.set_to_return_all_reads()
-        mod_ratio_dl = DataLoader(ds, num_workers=args.n_processes, collate_fn=all_reads_collate, batch_size=args.batch_size, worker_init_fn=random_fn, shuffle=False)
-        mod_ratio, read_probs, read_ids = infer_mod_ratio(model, mod_ratio_dl, args.device, args.read_proba_threshold)
-        result_df["mod_ratio"] = mod_ratio
-
-        assert(len(read_probs) == len(read_ids) == len(result_df))
-        indiv_read_df = {'transcript_id': [], 'transcript_position': [], 'read_index': [], 'probability_modified': []}
-        for read_prob, read_id, tx_id, tx_pos in zip(read_probs, read_ids, result_df["transcript_id"], result_df["transcript_position"]):
-            indiv_read_df["transcript_id"].extend(np.repeat(tx_id, len(read_prob)))
-            indiv_read_df["transcript_position"].extend(np.repeat(tx_pos, len(read_prob)))
-            indiv_read_df["read_index"].extend(read_id)
-            indiv_read_df['probability_modified'].extend(read_prob)
-        pd.DataFrame(indiv_read_df).to_csv(os.path.join(out_dir, "data.indiv_proba.csv.gz"), index=False)
+    result_df["mod_ratio"] = mod_ratio
 
     result_df.to_csv(os.path.join(out_dir, "data.result.csv.gz"), index=False)
-    
+
 def main():
     args = argparser().parse_args()
     run_inference(args)

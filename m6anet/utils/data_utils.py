@@ -16,21 +16,20 @@ from itertools import product
 class NanopolishDS(Dataset):
 
     def __init__(self, root_dir=None, min_reads=20, norm_path=None, site_info=None,
-                 num_neighboring_features=1, mode='Inference', site_mode=False,
+                 num_neighboring_features=1, mode='Inference',
                  sample=True,
                  n_processes=1, data_info=None):
         allowed_mode = ('Train', 'Test', 'Val', 'Inference')
-        
+
         if mode not in allowed_mode:
             raise ValueError("Invalid mode passed to dataset, must be one of {}".format(allowed_mode))
-        
+
         if (root_dir is None) and (data_info is None):
             raise ValueError("Either root directory or data info must be given")
 
         self.mode = mode
         self.site_info = site_info
         self.min_reads = min_reads
-        self.site_mode = site_mode
         self.sample = sample
 
         if data_info is None:
@@ -51,8 +50,8 @@ class NanopolishDS(Dataset):
         center_motifs = [['A', 'G', 'T'], ['G', 'A'], ['A'], ['C'], ['A', 'C', 'T']]
         flanking_motifs = [['G', 'A', 'C', 'T'] for i in range(self.num_neighboring_features)]
         all_kmers = list(["".join(x) for x in product(*(flanking_motifs + center_motifs + flanking_motifs))])
-        
-        self.all_kmers = np.unique(np.array(list(map(lambda x: [x[i:i+5] for i in range(len(x) -4)], 
+
+        self.all_kmers = np.unique(np.array(list(map(lambda x: [x[i:i+5] for i in range(len(x) -4)],
                                             all_kmers))).flatten())
         self.kmer_to_int = {self.all_kmers[i]: i for i in range(len(self.all_kmers))}
         self.int_to_kmer =  {i: self.all_kmers[i] for i in range(len(self.all_kmers))}
@@ -61,41 +60,43 @@ class NanopolishDS(Dataset):
 
         kmer, _ = self._load_data(0)
         self.total_neighboring_features = (len(kmer) - 5) // 2
-        left_idx = [(self.total_neighboring_features - num_neighboring_features + j) * 3 + i 
+        left_idx = [(self.total_neighboring_features - num_neighboring_features + j) * 3 + i
                     for j in range(num_neighboring_features) for i in range(3)]
         center_idx = [self.total_neighboring_features * 3 + i for i in range(3)]
-        right_idx = [(self.total_neighboring_features + j) * 3 + i for j in range(1, num_neighboring_features + 1) 
+        right_idx = [(self.total_neighboring_features + j) * 3 + i for j in range(1, num_neighboring_features + 1)
                         for i in range(3)]
 
         self.indices = np.concatenate([left_idx, center_idx, right_idx]).astype('int')
 
         if self.mode != 'Inference':
             self.labels = self.data_info["modification_status"].values
+        else:
+            self.set_to_return_all_reads()
 
     def prepare_data_info(self, data_info):
+
         fpath = os.path.dirname(data_info)
         self.data_fpath = os.path.join(fpath, "data.json")
         data_info = pd.read_csv(data_info)
         if self.mode != 'Inference':
             data_info = data_info[data_info["set_type"] == self.mode].reset_index(drop=True)
 
-        data_index = pd.read_csv(os.path.join(fpath ,"data.index"))            
+        data_index = pd.read_csv(os.path.join(fpath ,"data.index"))
         data_info = data_index.merge(data_info, on=["transcript_id", "transcript_position"])
         self.data_info = data_info
 
     def initialize_data_info(self, fpath, min_reads):
-        data_index = pd.read_csv(os.path.join(fpath ,"data.index"))            
+
         if self.mode == 'Inference':
-            read_count = pd.read_csv(os.path.join(fpath, "data.readcount"))
+            data_info = pd.read_csv(os.path.join(fpath, "data.info"))
         else:
             if self.site_info is None:
-                read_count = pd.read_csv(os.path.join(fpath, "data.readcount.labelled"))
+                data_info = pd.read_csv(os.path.join(fpath, "data.info.labelled"))
             else:
-                read_count = pd.read_csv(os.path.join(self.site_info, "data.readcount.labelled"))
-            
-            read_count = read_count[read_count["set_type"] == self.mode].reset_index(drop=True)
+                data_info = pd.read_csv(os.path.join(self.site_info, "data.info.labelled"))
 
-        data_info = data_index.merge(read_count, on=["transcript_id", "transcript_position"])
+            data_info = data_info[data_info["set_type"] == self.mode].reset_index(drop=True)
+
         self.data_fpath = os.path.join(fpath, "data.json")
         self.data_info = data_info[data_info["n_reads"] >= min_reads].reset_index(drop=True)
 
@@ -126,28 +127,28 @@ class NanopolishDS(Dataset):
 
         if self.sample:
             features = features[np.random.choice(len(features), self.min_reads, replace=False), :]
-        read_ids = torch.LongTensor(features[:, -1])
+
+        read_ids = torch.LongTensor(features[:, -1].astype('int'))
         features = features[:, self.indices]
+
         if self.norm_dict is not None:
             mean, std = self.get_norm_factor(kmer)
             features = torch.Tensor((features - mean) / std)
         else:
             features = torch.Tensor((features))
 
-        if not self.site_mode:
-            kmer = np.repeat(np.array([self.kmer_to_int[kmer] for kmer in kmer])\
-                        .reshape(-1, 2 * self.num_neighboring_features + 1), len(features), axis=0)
-            kmer = torch.Tensor(kmer)
-        else:
-            kmer = torch.LongTensor([self.kmer_to_int[kmer] for kmer in kmer])
+        kmer = torch.LongTensor(np.repeat(np.array([self.kmer_to_int[kmer] for kmer in kmer])\
+                    .reshape(-1, 2 * self.num_neighboring_features + 1), len(features), axis=0))
+
+
         if self.mode == 'Inference':
             return features, kmer, read_ids
         else:
             return features, kmer, self.data_info.iloc[idx]["modification_status"]
-    
+
     def get_norm_factor(self, list_of_kmers):
         norm_mean, norm_std = [], []
-        for kmer in list_of_kmers:  
+        for kmer in list_of_kmers:
             mean, std = self.norm_dict[kmer]
             norm_mean.append(mean)
             norm_std.append(std)
@@ -167,21 +168,21 @@ class NanopolishDS(Dataset):
         else:
             return kmer
 
-    def _retrieve_sequence(self, sequence, n_neighboring_features=0):
+    def _retrieve_sequence(self, sequence):
         return [sequence[i : i+5] for i in range(len(sequence) - 4)]
 
- 
+
 class NanopolishReplicateDS(NanopolishDS):
 
     def __init__(self, root_dirs=None, min_reads=20, norm_path=None, site_info=None,
-                 num_neighboring_features=1, mode='Inference', site_mode=False,
+                 num_neighboring_features=1, mode='Inference',
                  sample=True,
                  data_info=None,
                  n_processes=1):
         super().__init__(root_dirs, min_reads, norm_path, site_info,
-                         num_neighboring_features, mode, site_mode, sample,
+                         num_neighboring_features, mode, sample,
                          n_processes, data_info)
-    
+
     def prepare_data_info(self, data_info):
         data_info = pd.read_csv(data_info)
         data_info["coords"] = data_info["coords"].apply(lambda x: literal_eval(x))
@@ -197,7 +198,7 @@ class NanopolishReplicateDS(NanopolishDS):
 
     def initialize_data_info(self, root_dirs, min_reads):
         all_read_info = [pd.read_csv(os.path.join(root_dir, "data.index"))\
-                                      .merge(pd.read_csv(os.path.join(root_dir, "data.readcount")), 
+                                      .merge(pd.read_csv(os.path.join(root_dir, "data.readcount")),
                                              on=["transcript_id", "transcript_position"])\
                                       .set_index(["transcript_id", "transcript_position"])\
                                                  .assign(fpath=root_dir)
@@ -215,16 +216,16 @@ class NanopolishReplicateDS(NanopolishDS):
         read_info["fpath"] = fpath
         self.data_info = read_info[read_info["n_reads"] >= min_reads].reset_index(drop=True)
 
-        
+
     def _load_data(self, idx):
         tx_id, tx_pos, coords, fpaths = self.data_info.iloc[idx][["transcript_id", "transcript_position",
                                                                   "coords", "fpath"]]
         all_features = []
         all_kmer = None
         for coord, fpath in zip(coords, fpaths):
-        
+
             start_pos, end_pos = coord
-            
+
             with open(os.path.join(fpath, "data.json"), 'r') as f:
                 f.seek(start_pos, 0)
                 json_str = f.read(end_pos - start_pos)
@@ -238,7 +239,7 @@ class NanopolishReplicateDS(NanopolishDS):
                 else:
                     assert(all_kmer == kmer)
                 all_features.append(features)
-        all_features = np.concatenate(all_features) 
+        all_features = np.concatenate(all_features)
         return all_kmer, all_features
 
     def compute_norm_factors(self, n_processes):
@@ -248,9 +249,9 @@ class NanopolishReplicateDS(NanopolishDS):
         return norm_dict
 
     def annotate_kmer_information(self, index_df, n_processes):
-        tasks = ((os.path.join(fpaths[0], "data.json"), tx_id, tx_pos, coords[0][0], coords[0][1]) for fpaths, tx_id, tx_pos, coords in 
+        tasks = ((os.path.join(fpaths[0], "data.json"), tx_id, tx_pos, coords[0][0], coords[0][1]) for fpaths, tx_id, tx_pos, coords in
                     zip(index_df["fpath"], index_df["transcript_id"], index_df["transcript_position"], index_df["coords"]))
-                            
+
         with Pool(n_processes) as p:
             kmer_info = [x for x in tqdm(p.imap(read_kmer, tasks), total=len(index_df))]
         index_df["kmer"] = kmer_info
@@ -264,7 +265,7 @@ class NanopolishReplicateDS(NanopolishDS):
             for i in range(len(kmers)):
                 kmer_mapping_df += [(tx, tx_position, coords, fpaths, n_reads, kmers[i], i)]
 
-        kmer_mapping_df = pd.DataFrame(kmer_mapping_df, 
+        kmer_mapping_df = pd.DataFrame(kmer_mapping_df,
                                     columns=["transcript_id", "transcript_position", "coords", "fpath", "n_reads", "kmer", "segment_number"])
         return kmer_mapping_df
 
@@ -320,28 +321,17 @@ class ImbalanceKmerUnderSampler(torch.utils.data.Sampler):
         self.all_motifs = np.unique(self.data_kmers)
         self.class_counts = np.unique(self.data_source.labels, return_counts=True)[1]
         self.minority_class, self.majority_class = np.argmin(self.class_counts), np.argmax(self.class_counts)
-        
+
         self.minority_class_idx = {}
         self.majority_class_idx = {}
 
-        for label, idx_dict in zip([self.minority_class, self.majority_class], 
+        for label, idx_dict in zip([self.minority_class, self.majority_class],
                                    [self.minority_class_idx, self.majority_class_idx]):
             for motif in self.all_motifs:
                 label_mask = (self.data_source.labels == label)
                 motif_mask = (self.data_kmers == motif)
                 idx_dict[motif] = np.argwhere(label_mask & motif_mask).flatten()
         self.length = len(self.generate_indices())
-        # # For testing
-
-        # indices = self.generate_indices()
-        # print(indices)
-        # print(np.unique(self.data_source.labels[indices], return_counts=True))
-        # df = self.data_source.data_info
-        # df = df.loc[indices]
-        # for kmer in self.all_motifs:
-        #     sub_df = df[df["kmer"] == kmer]
-        #     print("{}: {}".format(kmer, np.unique(sub_df.modification_status, return_counts=True)))
-        # raise ValueError()
 
     def generate_indices(self):
         indices = []
@@ -359,7 +349,7 @@ class ImbalanceKmerUnderSampler(torch.utils.data.Sampler):
         return indices
 
     def __iter__(self):
-        
+
         indices = self.generate_indices()
         return iter(indices)
 
@@ -375,30 +365,18 @@ class ImbalanceKmerOverSampler(torch.utils.data.Sampler):
         self.all_motifs = np.unique(self.data_kmers)
         self.class_counts = np.unique(self.data_source.labels, return_counts=True)[1]
         self.minority_class, self.majority_class = np.argmin(self.class_counts), np.argmax(self.class_counts)
-        
+
         self.minority_class_idx = {}
         self.majority_class_idx = {}
 
-        for label, idx_dict in zip([self.minority_class, self.majority_class], 
+        for label, idx_dict in zip([self.minority_class, self.majority_class],
                                    [self.minority_class_idx, self.majority_class_idx]):
             for motif in self.all_motifs:
                 label_mask = (self.data_source.labels == label)
                 motif_mask = (self.data_kmers == motif)
                 idx_dict[motif] = np.argwhere(label_mask & motif_mask).flatten()
-        
+
         self.length = len(self.generate_indices())
-
-        # # For testing
-
-        # indices = self.generate_indices()
-        # print(indices)
-        # print(np.unique(self.data_source.labels[indices], return_counts=True))
-        # df = self.data_source.data_info
-        # df = df.loc[indices]
-        # for kmer in self.all_motifs:
-        #     sub_df = df[df["kmer"] == kmer]
-        #     print("{}: {}".format(kmer, np.unique(sub_df.modification_status, return_counts=True)))
-        # raise ValueError()
 
     def generate_indices(self):
         indices = []
@@ -407,7 +385,7 @@ class ImbalanceKmerOverSampler(torch.utils.data.Sampler):
                 majority_idx = self.majority_class_idx[motif]
                 majority_count = len(majority_idx)
 
-                assert(majority_count >= len(minority_idx)) 
+                assert(majority_count >= len(minority_idx))
 
                 n_samples = majority_count - len(minority_idx)
                 replace = n_samples > len(minority_idx) # sample with replacement if more samples needed than the entire minority samples
@@ -422,7 +400,7 @@ class ImbalanceKmerOverSampler(torch.utils.data.Sampler):
         return indices
 
     def __iter__(self):
-        
+
         indices = self.generate_indices()
         return iter(indices)
 
@@ -430,19 +408,14 @@ class ImbalanceKmerOverSampler(torch.utils.data.Sampler):
         return self.length
 
 
-def all_reads_collate(batch):
-    n_reads = torch.tensor([len(item[0]) for item in batch])
+def inference_collate(batch):
+    n_reads = torch.LongTensor([len(item[0]) for item in batch])
     features = torch.cat([item[0] for item in batch])
     kmers = torch.cat([item[1] for item in batch])
     read_ids = torch.cat([item[2] for item in batch])
     return features, kmers, n_reads, read_ids
 
 
-def inference_collate(batch):
-    return {key: batch for key, batch 
-            in zip (['X', 'kmer'], default_collate(batch))}
-
-
 def train_collate(batch):
-    return {key: batch for key, batch 
+    return {key: batch for key, batch
             in zip (['X', 'kmer', 'y'], default_collate(batch))}

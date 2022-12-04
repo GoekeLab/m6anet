@@ -2,7 +2,6 @@ import numpy as np
 import os
 import torch
 import time
-from collections import OrderedDict
 from sklearn.metrics import accuracy_score, roc_curve, precision_recall_curve, auc
 from torch.nn.utils import clip_grad_norm_
 
@@ -26,15 +25,15 @@ def get_accuracy(y_true, y_pred):
 def train(model, train_dl, val_dl, optimizer, n_epoch, device, criterion,
           save_dir=None, clip_grad=None,
           save_per_epoch=10, epoch_increment=0, n_iterations=1):
-    
+
     assert(save_per_epoch <= n_epoch)
-    
+
     total_train_time = 0
     train_results = {}
     val_results = {}
-    
+
     for epoch in range(1, n_epoch + 1):
-        train_results_epoch = train_one_epoch(model, train_dl, device, optimizer, criterion, 
+        train_results_epoch = train_one_epoch(model, train_dl, device, optimizer, criterion,
                                               clip_grad=clip_grad)
         val_results_epoch = validate(model, val_dl, device, criterion, n_iterations)
 
@@ -42,7 +41,7 @@ def train(model, train_dl, val_dl, optimizer, n_epoch, device, criterion,
         print("Epoch:[{epoch}/{n_epoch}] \t "
               "train time:{train_time:.0f}s \t "
               "val time:{val_time:.0f}s \t "
-              "({total:.0f}s)".format(epoch=epoch + epoch_increment, 
+              "({total:.0f}s)".format(epoch=epoch + epoch_increment,
                                       n_epoch = n_epoch + epoch_increment,
                                       train_time=train_results_epoch["compute_time"],
                                       val_time=val_results_epoch["compute_time"],
@@ -52,7 +51,7 @@ def train(model, train_dl, val_dl, optimizer, n_epoch, device, criterion,
               "Train PR AUC: {pr_auc:.3f}".format(loss=train_results_epoch["avg_loss"],
                                                   roc_auc=train_results_epoch["roc_auc"],
                                                   pr_auc=train_results_epoch["pr_auc"]))
-   
+
         print("Val Loss:{loss:.2f} \t "
               "Val ROC AUC: {roc_auc:.3f}\t "
               "Val PR AUC: {pr_auc:.3f}".format(loss=val_results_epoch["avg_loss"],
@@ -105,15 +104,15 @@ def train_one_epoch(model, pair_dataloader, device, optimizer, criterion, clip_g
 
         optimizer.step()
         optimizer.zero_grad()
-                
+
         train_loss_list.append(loss.item())
-        
+
         y_true = y_true.detach().cpu().numpy()
         y_pred = y_pred.detach().cpu().numpy()
 
 
         all_y_true.extend(y_true)
-        
+
         if (len(y_pred.shape) == 1) or (y_pred.shape[1] == 1):
             all_y_pred.extend(y_pred.flatten())
 
@@ -160,7 +159,7 @@ def validate(model, val_dl, device, criterion, n_iterations=1):
                 all_y_true = y_true_tmp
 
             all_y_pred.append(y_pred_tmp)
-            
+
     compute_time = time.time() - start
     y_pred_avg = np.mean(all_y_pred, axis=0)
     all_y_true = np.array(all_y_true).flatten()
@@ -175,61 +174,3 @@ def validate(model, val_dl, device, criterion, n_iterations=1):
     val_results["avg_loss"] = criterion(torch.Tensor(y_pred_avg), torch.Tensor(all_y_true)).item()
 
     return val_results
-
-
-def inference(model, dl, device, n_iterations=1):
-    """
-    Run inference on unlabelled dataset
-    """
-    model.eval()
-    all_y_pred = []
-    all_kmers = None
-    kmer_maps = dl.dataset.int_to_kmer
-    with torch.no_grad():
-        for _ in range(n_iterations):
-            kmers = []
-            y_pred_tmp = []
-            for batch in dl:
-                X = OrderedDict({key: val.to(device) for key, val in batch.items()})
-
-                if all_kmers is None:
-                    kmers.append([kmer_maps[x[0][x.shape[-1] // 2].item()] for x in X['kmer']])
-
-                y_pred = model(X)
-                y_pred = y_pred.detach().cpu().numpy()
-                if (len(y_pred.shape) == 1) or (y_pred.shape[1] == 1):
-                    y_pred_tmp.extend(y_pred.flatten())
-                else:
-                    y_pred_tmp.extend(y_pred[:, 1])
-
-            all_y_pred.append(y_pred_tmp)
-
-            if all_kmers is None:
-                all_kmers = np.concatenate(kmers)
-    return np.mean(all_y_pred, axis=0), all_kmers
-
-
-def group_probs(probs, n_reads):
-    i = 0
-    grouped_probs = []
-    for n_read in n_reads:
-        grouped_probs.append(probs[i: i + n_read])
-        i += n_read
-    return grouped_probs
-
-
-def infer_mod_ratio(model, mod_ratio_dl, device, read_proba_threshold):
-    model.eval()
-    with torch.no_grad():
-        read_probs, read_lengths, read_ids = [], [], []
-        for data in iter(mod_ratio_dl):
-            features, kmers, n_reads, read_id = data
-            features = model.get_read_representation({'X': features.to(device), 'kmer': kmers.to(device)})
-            probs = model.pooling_filter.probability_layer(features).flatten()
-            read_probs.append(probs.detach().cpu().numpy())
-            read_lengths.append(n_reads.numpy())
-            read_ids.append(read_id)
-
-        read_probs = group_probs(np.concatenate(read_probs), np.concatenate(read_lengths))
-        read_ids = group_probs(np.concatenate(read_ids), np.concatenate(read_lengths))
-        return np.array([np.mean(x >= read_proba_threshold) for x in read_probs]), read_probs, read_ids
