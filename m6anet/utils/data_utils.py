@@ -17,7 +17,6 @@ class NanopolishDS(Dataset):
 
     def __init__(self, root_dir=None, min_reads=20, norm_path=None, site_info=None,
                  num_neighboring_features=1, mode='Inference',
-                 sample=True,
                  n_processes=1, data_info=None):
         allowed_mode = ('Train', 'Test', 'Val', 'Inference')
 
@@ -30,7 +29,6 @@ class NanopolishDS(Dataset):
         self.mode = mode
         self.site_info = site_info
         self.min_reads = min_reads
-        self.sample = sample
 
         if data_info is None:
             self.initialize_data_info(root_dir, min_reads)
@@ -58,20 +56,23 @@ class NanopolishDS(Dataset):
 
         # Inferring total number of neighboring features extracted during dataprep step
 
-        kmer, _ = self._load_data(0)
-        self.total_neighboring_features = (len(kmer) - 5) // 2
-        left_idx = [(self.total_neighboring_features - num_neighboring_features + j) * 3 + i
-                    for j in range(num_neighboring_features) for i in range(3)]
-        center_idx = [self.total_neighboring_features * 3 + i for i in range(3)]
-        right_idx = [(self.total_neighboring_features + j) * 3 + i for j in range(1, num_neighboring_features + 1)
-                        for i in range(3)]
-
-        self.indices = np.concatenate([left_idx, center_idx, right_idx]).astype('int')
+        self.set_feature_indices()
 
         if self.mode != 'Inference':
             self.labels = self.data_info["modification_status"].values
+            self.inference = False
         else:
-            self.set_to_return_all_reads()
+            self.inference = True
+
+    def set_feature_indices(self):
+        self.total_neighboring_features = self.get_total_neighboring_features()
+        left_idx = [(self.total_neighboring_features - self.num_neighboring_features + j) * 3 + i
+                    for j in range(self.num_neighboring_features) for i in range(3)]
+        center_idx = [self.total_neighboring_features * 3 + i for i in range(3)]
+        right_idx = [(self.total_neighboring_features + j) * 3 + i
+                     for j in range(1, self.num_neighboring_features + 1)
+                     for i in range(3)]
+        self.indices = np.concatenate([left_idx, center_idx, right_idx]).astype('int')
 
     def prepare_data_info(self, data_info):
 
@@ -100,16 +101,25 @@ class NanopolishDS(Dataset):
         self.data_fpath = os.path.join(fpath, "data.json")
         self.data_info = data_info[data_info["n_reads"] >= min_reads].reset_index(drop=True)
 
-    def set_to_return_all_reads(self):
-        self.sample = False
-
     def __len__(self):
         return len(self.data_info)
 
-    def _load_data(self, idx):
-        with open(self.data_fpath, 'r') as f:
-            tx_id, tx_pos, start_pos, end_pos = self.data_info.iloc[idx][["transcript_id", "transcript_position",
-                                                                          "start", "end"]]
+    def get_total_neighboring_features(self):
+        tx_id, tx_pos, start_pos, end_pos = self.data_info.iloc[0][["transcript_id", "transcript_position",
+                                                                      "start", "end"]]
+        kmer, _ = self._load_data(self.data_fpath, tx_id, tx_pos, start_pos, end_pos)
+        return (len(kmer) - 5) // 2
+
+    def load_data(self, idx):
+        tx_id, tx_pos, start_pos, end_pos = self.data_info.iloc[idx][["transcript_id", "transcript_position",
+                                                                      "start", "end"]]
+        kmer, features = self._load_data(self.data_fpath, tx_id, tx_pos, start_pos, end_pos)
+
+        read_ids, features = features[:, -1], features[:, self.indices]
+        return tx_id, tx_pos, read_ids, features, kmer
+
+    def _load_data(self, fpath, tx_id, tx_pos, start_pos, end_pos):
+        with open(fpath, 'r') as f:
             f.seek(start_pos, 0)
             json_str = f.read(end_pos - start_pos)
             pos_info = json.loads(json_str)[tx_id][str(tx_pos)]
@@ -120,16 +130,13 @@ class NanopolishDS(Dataset):
         return kmer, np.array(features)
 
     def __getitem__(self, idx):
-        kmer, features = self._load_data(idx)
-        # Repeating kmer to the number of reads sampled
+        tx_id, tx_pos, read_ids, features, kmer = self.load_data(idx)
+
         kmer = self._retrieve_full_sequence(kmer, self.num_neighboring_features)
         kmer = [kmer[i:i+5] for i in range(2 * self.num_neighboring_features + 1)]
 
-        if self.sample:
+        if not self.inference:
             features = features[np.random.choice(len(features), self.min_reads, replace=False), :]
-
-        read_ids = torch.LongTensor(features[:, -1].astype('int'))
-        features = features[:, self.indices]
 
         if self.norm_dict is not None:
             mean, std = self.get_norm_factor(kmer)
@@ -137,12 +144,14 @@ class NanopolishDS(Dataset):
         else:
             features = torch.Tensor((features))
 
+        # Repeating kmer to the number of reads
         kmer = torch.LongTensor(np.repeat(np.array([self.kmer_to_int[kmer] for kmer in kmer])\
                     .reshape(-1, 2 * self.num_neighboring_features + 1), len(features), axis=0))
 
-
-        if self.mode == 'Inference':
-            return features, kmer, read_ids
+        if self.inference:
+            tx_id = np.repeat(tx_id, len(features))
+            tx_pos = np.repeat(tx_pos, len(features))
+            return features, kmer, tx_id, tx_pos, read_ids
         else:
             return features, kmer, self.data_info.iloc[idx]["modification_status"]
 
@@ -176,11 +185,10 @@ class NanopolishReplicateDS(NanopolishDS):
 
     def __init__(self, root_dirs=None, min_reads=20, norm_path=None, site_info=None,
                  num_neighboring_features=1, mode='Inference',
-                 sample=True,
                  data_info=None,
                  n_processes=1):
         super().__init__(root_dirs, min_reads, norm_path, site_info,
-                         num_neighboring_features, mode, sample,
+                         num_neighboring_features, mode,
                          n_processes, data_info)
 
     def prepare_data_info(self, data_info):
@@ -190,19 +198,17 @@ class NanopolishReplicateDS(NanopolishDS):
         data_info["n_reads"] = data_info["n_reads"].astype('int')
         data_info = data_info[data_info["n_reads"] >= self.min_reads].reset_index(drop=True)
 
-        if self.mode != 'Inference':
+        if not self.inference:
             data_info = data_info[data_info["set_type"] == self.mode].reset_index(drop=True)
 
         self.data_info = data_info
 
 
     def initialize_data_info(self, root_dirs, min_reads):
-        all_read_info = [pd.read_csv(os.path.join(root_dir, "data.index"))\
-                                      .merge(pd.read_csv(os.path.join(root_dir, "data.readcount")),
-                                             on=["transcript_id", "transcript_position"])\
-                                      .set_index(["transcript_id", "transcript_position"])\
-                                                 .assign(fpath=root_dir)
-                     for root_dir in root_dirs]
+        all_read_info = [pd.read_csv(os.path.join(root_dir, "data.info"))\
+                            .assign(fpath=root_dir)\
+                            .set_index(["transcript_id", "transcript_position"])
+                        for root_dir in root_dirs]
         read_info = pd.concat(all_read_info, axis=1)
         total_reads = read_info["n_reads"].sum(axis=1).reset_index(drop=True)
         start = read_info["start"].apply(lambda x: [int(col) for col in x if col == col], axis=1)
@@ -215,32 +221,41 @@ class NanopolishReplicateDS(NanopolishDS):
         read_info["coords"] = coord
         read_info["fpath"] = fpath
         self.data_info = read_info[read_info["n_reads"] >= min_reads].reset_index(drop=True)
+        self.fpath_mapping = {root_dir: num_rep for num_rep, root_dir in enumerate(root_dirs)}
 
+    def get_total_neighboring_features(self):
+        tx_id, tx_pos, coords, fpaths = self.data_info.iloc[0][["transcript_id", "transcript_position",
+                                                               "coords", "fpath"]]
+        start_pos, end_pos = coords[0]
+        fpath = os.path.join(fpaths[0], "data.json")
 
-    def _load_data(self, idx):
+        kmer, _ = self._load_data(fpath, tx_id, tx_pos, start_pos, end_pos)
+        return (len(kmer) - 5) // 2
+
+    def load_data(self, idx):
         tx_id, tx_pos, coords, fpaths = self.data_info.iloc[idx][["transcript_id", "transcript_position",
                                                                   "coords", "fpath"]]
         all_features = []
+        all_read_ids = []
         all_kmer = None
         for coord, fpath in zip(coords, fpaths):
-
             start_pos, end_pos = coord
+            read_suffix = self.fpath_mapping[fpath]
+            fpath = os.path.join(fpath, "data.json")
+            kmer, features = self._load_data(fpath, tx_id, tx_pos, start_pos, end_pos)
 
-            with open(os.path.join(fpath, "data.json"), 'r') as f:
-                f.seek(start_pos, 0)
-                json_str = f.read(end_pos - start_pos)
-                pos_info = json.loads(json_str)[tx_id][str(tx_pos)]
+            if all_kmer is None:
+                all_kmer = kmer
+            else:
+                assert(all_kmer == kmer)
 
-                assert(len(pos_info.keys()) == 1)
+            read_ids, features = features[:, -1].astype('int'), features[:, self.indices]
+            all_features.append(features)
+            all_read_ids.append(["{}_{}".format(read_id, read_suffix) for read_id in read_ids])
 
-                kmer, features = list(pos_info.items())[0]
-                if all_kmer is None:
-                    all_kmer = kmer
-                else:
-                    assert(all_kmer == kmer)
-                all_features.append(features)
         all_features = np.concatenate(all_features)
-        return all_kmer, all_features
+        all_read_ids = np.concatenate(all_read_ids)
+        return tx_id, tx_pos, all_read_ids, all_features, all_kmer
 
     def compute_norm_factors(self, n_processes):
         kmer_mapping_df = self.annotate_kmer_information(self.data_info, n_processes)
@@ -260,160 +275,33 @@ class NanopolishReplicateDS(NanopolishDS):
     def create_kmer_mapping_df(self, merged_df):
         kmer_mapping_df = []
         for _, row in merged_df.iterrows():
-            tx, tx_position, sequence, coords, fpaths, n_reads = row["transcript_id"], row["transcript_position"], row["kmer"], row["coords"], row["fpath"], row["n_reads"]
+            tx, tx_position, sequence, coords, fpaths, n_reads = row["transcript_id"], \
+                    row["transcript_position"], row["kmer"], row["coords"], row["fpath"], row["n_reads"]
             kmers = [sequence[i:i+5] for i in range(len(sequence) - 4)]
             for i in range(len(kmers)):
                 kmer_mapping_df += [(tx, tx_position, coords, fpaths, n_reads, kmers[i], i)]
-
         kmer_mapping_df = pd.DataFrame(kmer_mapping_df,
-                                    columns=["transcript_id", "transcript_position", "coords", "fpath", "n_reads", "kmer", "segment_number"])
+                                    columns=["transcript_id", "transcript_position", "coords",
+                                             "fpath", "n_reads", "kmer", "segment_number"])
         return kmer_mapping_df
 
     def create_norm_dict(self, kmer_mapping_df, n_processes):
         tasks = ((kmer, df) for kmer, df in kmer_mapping_df.groupby("kmer"))
         with Pool(n_processes) as p:
-            norm_dict = [x for x in tqdm(p.imap_unordered(get_mean_std_replicates, tasks), total=len(kmer_mapping_df["kmer"].unique()))]
+            norm_dict = [x for x in tqdm(p.imap_unordered(get_mean_std_replicates, tasks),
+                                         total=len(kmer_mapping_df["kmer"].unique()))]
         return {tup[0]: (tup[1], tup[2]) for tup in norm_dict}
-
-class ImbalanceUnderSampler(torch.utils.data.Sampler):
-
-    def __init__(self, data_source):
-        self.data_source = data_source
-        self.class_counts = np.unique(self.data_source.labels, return_counts=True)[1]
-        self.minority_class, self.majority_class = np.argmin(self.class_counts), np.argmax(self.class_counts)
-        self.minority_class_idx = np.argwhere(self.data_source.labels == self.minority_class).flatten()
-        self.majority_class_idx = np.argwhere(self.data_source.labels == self.majority_class).flatten()
-
-    def __iter__(self):
-        idx = np.append(self.minority_class_idx, np.random.choice(self.majority_class_idx,
-                                                                  len(self.minority_class_idx), replace=False))
-        np.random.shuffle(idx)
-        return iter(idx)
-
-    def __len__(self):
-        return 2 * len(self.minority_class_idx)
-
-
-class ImbalanceOverSampler(torch.utils.data.Sampler):
-
-    def __init__(self, data_source):
-        self.data_source = data_source
-        self.class_counts = np.unique(self.data_source.labels, return_counts=True)[1]
-        self.minority_class, self.majority_class = np.argmin(self.class_counts), np.argmax(self.class_counts)
-        self.minority_class_idx = np.argwhere(self.data_source.labels == self.minority_class).flatten()
-        self.majority_class_idx = np.argwhere(self.data_source.labels == self.majority_class).flatten()
-
-    def __iter__(self):
-        idx = np.append(self.majority_class_idx, np.random.choice(self.minority_class_idx,
-                                                                  len(self.majority_class_idx), replace=True))
-        np.random.shuffle(idx)
-        return iter(idx)
-
-    def __len__(self):
-        return 2 * len(self.majority_class_idx)
-
-
-class ImbalanceKmerUnderSampler(torch.utils.data.Sampler):
-
-    def __init__(self, data_source):
-        self.data_source = data_source
-        self.data_kmers = self.data_source.data_info["kmer"].values
-        self.all_motifs = np.unique(self.data_kmers)
-        self.class_counts = np.unique(self.data_source.labels, return_counts=True)[1]
-        self.minority_class, self.majority_class = np.argmin(self.class_counts), np.argmax(self.class_counts)
-
-        self.minority_class_idx = {}
-        self.majority_class_idx = {}
-
-        for label, idx_dict in zip([self.minority_class, self.majority_class],
-                                   [self.minority_class_idx, self.majority_class_idx]):
-            for motif in self.all_motifs:
-                label_mask = (self.data_source.labels == label)
-                motif_mask = (self.data_kmers == motif)
-                idx_dict[motif] = np.argwhere(label_mask & motif_mask).flatten()
-        self.length = len(self.generate_indices())
-
-    def generate_indices(self):
-        indices = []
-        for motif, majority_idx in self.majority_class_idx.items():
-            if motif in self.minority_class_idx:
-                minority_idx = self.minority_class_idx[motif]
-                minority_count = len(minority_idx)
-                replace = len(majority_idx) < minority_count # Replace if there are more minority samples
-                indices = np.append(indices, np.random.choice(majority_idx, minority_count, replace=replace))
-                indices = np.append(indices, minority_idx)
-            else:
-                indices = np.append(indices, majority_idx)
-        indices = indices.astype('int')
-        np.random.shuffle(indices)
-        return indices
-
-    def __iter__(self):
-
-        indices = self.generate_indices()
-        return iter(indices)
-
-    def __len__(self):
-        return self.length
-
-
-class ImbalanceKmerOverSampler(torch.utils.data.Sampler):
-
-    def __init__(self, data_source):
-        self.data_source = data_source
-        self.data_kmers = self.data_source.data_info["kmer"].values
-        self.all_motifs = np.unique(self.data_kmers)
-        self.class_counts = np.unique(self.data_source.labels, return_counts=True)[1]
-        self.minority_class, self.majority_class = np.argmin(self.class_counts), np.argmax(self.class_counts)
-
-        self.minority_class_idx = {}
-        self.majority_class_idx = {}
-
-        for label, idx_dict in zip([self.minority_class, self.majority_class],
-                                   [self.minority_class_idx, self.majority_class_idx]):
-            for motif in self.all_motifs:
-                label_mask = (self.data_source.labels == label)
-                motif_mask = (self.data_kmers == motif)
-                idx_dict[motif] = np.argwhere(label_mask & motif_mask).flatten()
-
-        self.length = len(self.generate_indices())
-
-    def generate_indices(self):
-        indices = []
-        for motif, minority_idx in self.minority_class_idx.items():
-            if (motif in self.majority_class_idx) and (len(minority_idx) > 0):
-                majority_idx = self.majority_class_idx[motif]
-                majority_count = len(majority_idx)
-
-                assert(majority_count >= len(minority_idx))
-
-                n_samples = majority_count - len(minority_idx)
-                replace = n_samples > len(minority_idx) # sample with replacement if more samples needed than the entire minority samples
-                sampled_minority_idx = np.random.choice(minority_idx, n_samples, replace=replace)
-                oversampled_minority_idx = np.append(minority_idx, sampled_minority_idx)
-                indices = np.append(indices, oversampled_minority_idx)
-                indices = np.append(indices, majority_idx)
-            else:
-                indices = np.append(indices, minority_idx)
-        indices = indices.astype('int')
-        np.random.shuffle(indices)
-        return indices
-
-    def __iter__(self):
-
-        indices = self.generate_indices()
-        return iter(indices)
-
-    def __len__(self):
-        return self.length
 
 
 def inference_collate(batch):
     n_reads = torch.LongTensor([len(item[0]) for item in batch])
     features = torch.cat([item[0] for item in batch])
     kmers = torch.cat([item[1] for item in batch])
-    read_ids = torch.cat([item[2] for item in batch])
-    return features, kmers, n_reads, read_ids
+    tx_ids = np.concatenate([item[2] for item in batch])
+    tx_pos = np.concatenate([item[3] for item in batch])
+    read_ids = np.concatenate([item[4] for item in batch])
+
+    return features, kmers, n_reads, tx_ids, tx_pos, read_ids
 
 
 def train_collate(batch):
