@@ -15,7 +15,7 @@ Output files from ``nanopolish eventalign``
 =================================   ==========  ===================  ============================================================================================================
 Argument name                       Required    Default value         Description
 =================================   ==========  ===================  ============================================================================================================
---eventalign=FILE                   Yes         NA                    Eventalign filepath, the output from nanopolish.         
+--eventalign=FILE                   Yes         NA                    Eventalign filepath, the output from nanopolish.
 --out_dir=DIR                       Yes         NA                    Output directory.
 --n_processes=NUM                   No          1                     Number of processes to run.
 --chunk_size=NUM                    No          1000000               chunksize argument for pandas read csv function on the eventalign input
@@ -54,7 +54,6 @@ Argument name                 Required    Default value             Description
 --batch_size=NUM              No          64                        Number of sites to be loaded each time for inference
 --n_processes=NUM             No          1                         Number of processes to run.
 --num_iterations=NUM          No          5                         Number of times m6anet iterates through each potential m6a sites.
---infer_mod_rate              No          False                     Whether to output m6A modification stoichiometry for each candidate site
 --read_proba_threshold=NUM    No          0.033379376               Threshold for each individual read to be considered modified during stoichiometry calculation
 ==========================    ==========  ========================= ==============================================================================
 
@@ -63,7 +62,8 @@ Argument name                 Required    Default value             Description
 ======================  ===============     =================================================================================================================================================
 File name                File type           Description
 ======================  ===============     =================================================================================================================================================
-data.result.csv.gz      csv.gz              Result table in compressed form  
+data.site_proba.csv     csv                 Result table for each candidate m6A site
+data.indiv_proba.csv    csv                 Result table for each candidate m6A read
 ======================  ===============     =================================================================================================================================================
 
 ``m6anet-train``
