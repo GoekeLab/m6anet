@@ -18,7 +18,9 @@ setup(
     long_description=README,
     url='https://github.com/GoekeLab/m6anet',
     packages=find_packages(),
-    package_data={'m6anet.model': ['model_states/prod_pooling_pr_auc.pt', 'configs/model_configs/prod_pooling.toml', 'norm_factors/norm_dict.joblib']},
+    package_data={'m6anet.model': ['model_states/prod_pooling_pr_auc.pt',
+                                   'configs/model_configs/prod_pooling.toml',
+                                   'norm_factors/norm_dict.joblib']},
     python_requires=">=3.7",
     install_requires=[
             'numpy==1.18.0',
