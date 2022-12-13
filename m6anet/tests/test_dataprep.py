@@ -7,7 +7,6 @@ from m6anet.scripts.dataprep import parallel_index, parallel_preprocess_tx
 
 
 def test_parallel_index(dataprep_args, tmp_path, eventalign_index):
-    assert(False)
     eventalign_filepath = dataprep_args['eventalign']
     chunk_size = dataprep_args['chunk_size']
     n_processes = dataprep_args['n_processes']

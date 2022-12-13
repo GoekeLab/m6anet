@@ -2,7 +2,7 @@
 
 from setuptools import setup,find_packages
 
-__pkg_name__ = 'm6anet'
+__pkg_name__ = 'm6anet-test-github-action'
 
 
 with open('README.md') as f:
