@@ -39,4 +39,4 @@ based on the ``probability_modified`` column, which can be relaxed at the expens
 
 m6Anet also supports pooling over multiple replicates. To do this, simply input multiple folders containing m6anet-dataprep outputs::
     
-        m6anet-run_inference --input_dir demo_data_1 demo_data_2 ... --out_dir demo_data --infer_mod-rate --n_processes 4
+        m6anet-run_inference --input_dir demo_data_1 demo_data_2 ... --out_dir demo_data --infer_mod_rate --n_processes 4
