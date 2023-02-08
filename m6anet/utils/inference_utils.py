@@ -1,12 +1,10 @@
+import os
+from multiprocessing import Pool
 import torch
 import numpy as np
-import pandas as pd
-import os
-from collections import OrderedDict
-from multiprocessing import Pool
 
 
-def inference(model, dl, args):
+def run_inference(model, dl, args):
     """
     Run inference on unlabelled dataset
     """

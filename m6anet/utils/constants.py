@@ -1,11 +1,20 @@
-import numpy as np
+import pkg_resources
 from itertools import product
+import numpy as np
+
+
+DEFAULT_MODEL_CONFIG = pkg_resources.resource_filename('m6anet.model', 'configs/model_configs/m6anet.toml')
+DEFAULT_MODEL_WEIGHTS = pkg_resources.resource_filename('m6anet.model', 'model_states/m6anet.pt')
+DEFAULT_NORM_PATH = pkg_resources.resource_filename('m6anet.model', 'norm_factors/norm_dict.joblib')
+DEFAULT_MIN_READS = 20
+DEFAULT_READ_THRESHOLD = 0.033379376
+
 
 NUM_NEIGHBORING_FEATURES = 1
 CENTER_MOTIFS = [['A', 'G', 'T'], ['G', 'A'], ['A'], ['C'], ['A', 'C', 'T']]
 FLANKING_MOTIFS = [['G', 'A', 'C', 'T'] for i in range(NUM_NEIGHBORING_FEATURES)]
 ALL_KMERS = list(["".join(x) for x in product(*(FLANKING_MOTIFS + CENTER_MOTIFS + FLANKING_MOTIFS))])
-ALL_KMERS = np.unique(np.array(list(map(lambda x: [x[i:i+5] for i in range(len(x) -4)], 
+ALL_KMERS = np.unique(np.array(list(map(lambda x: [x[i:i+5] for i in range(len(x) -4)],
                                     ALL_KMERS))).flatten())
 KMER_TO_INT = {ALL_KMERS[i]: i for i in range(len(ALL_KMERS))}
 INT_TO_KMER =  {i: ALL_KMERS[i] for i in range(len(ALL_KMERS))}

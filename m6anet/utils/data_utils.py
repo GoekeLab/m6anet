@@ -5,7 +5,7 @@ import torch
 import json
 import joblib
 from ast import literal_eval
-from ..scripts.compute_normalization_factors import annotate_kmer_information, create_kmer_mapping_df, create_norm_dict, read_kmer, get_mean_std_replicates
+from .norm_utils import annotate_kmer_information, create_kmer_mapping_df, create_norm_dict, read_kmer, get_mean_std_replicates
 from multiprocessing import Pool
 from tqdm import tqdm
 from torch.utils.data import Dataset
