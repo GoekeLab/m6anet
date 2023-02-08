@@ -19,10 +19,10 @@ def argparser():
         add_help=False
     )
     # Required arguments
-    parser.add_argument("--input_dir", dest='input_dir', nargs="*",
+    parser.add_argument("--input_dir", nargs="*",
                         help='directories containing data.info and data.json.',
                         required=True)
-    parser.add_argument("--out_dir", dest='out_dir',
+    parser.add_argument("--out_dir",
                         help='directory to output inference results.',
                         required=True)
 

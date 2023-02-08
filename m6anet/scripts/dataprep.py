@@ -14,11 +14,11 @@ def argparser():
     )
 
     # Required arguments
-    parser.add_argument('--eventalign', dest='eventalign',
+    parser.add_argument('--eventalign',
                         help='eventalign filepath, the output from nanopolish.',
                         required=True)
 
-    parser.add_argument('--out_dir', dest='out_dir',
+    parser.add_argument('--out_dir',
                         help='output directory.',
                         required=True)
 
