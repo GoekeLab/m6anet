@@ -4,8 +4,8 @@ import numpy as np
 
 
 DEFAULT_MODEL_CONFIG = pkg_resources.resource_filename('m6anet.model', 'configs/model_configs/m6anet.toml')
-DEFAULT_MODEL_WEIGHTS = pkg_resources.resource_filename('m6anet.model', 'model_states/m6anet.pt')
-DEFAULT_NORM_PATH = pkg_resources.resource_filename('m6anet.model', 'norm_factors/norm_dict.joblib')
+DEFAULT_MODEL_WEIGHTS = pkg_resources.resource_filename('m6anet.model', 'model_states/human_hct116.pt')
+DEFAULT_NORM_PATH = pkg_resources.resource_filename('m6anet.model', 'norm_factors/norm_factors_hct116.joblib')
 DEFAULT_MIN_READS = 20
 DEFAULT_READ_THRESHOLD = 0.033379376
 
