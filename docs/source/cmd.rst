@@ -5,7 +5,7 @@ Command line arguments
 
 We provide 2 main scripts to run m6A prediction as the following.
 
-``m6anet-dataprep``
+``m6anet dataprep``
 ********************
 
 * Input
@@ -37,12 +37,12 @@ data.index              csv             File index indicating the position in th
 data.readcount          csv             Summary of readcounts per gene.
 ======================  ==============  ===============================================================================================================================================================
 
-``m6anet-run_inference``
+``m6anet inference``
 ************************
 
 * Input
 
-Output files from ``m6anet-dataprep``.
+Output files from ``m6anet dataprep``.
 
 ==========================    ==========  ========================= ==============================================================================
 Argument name                 Required    Default value             Description
@@ -66,7 +66,7 @@ data.site_proba.csv     csv                 Result table for each candidate m6A 
 data.indiv_proba.csv    csv                 Result table for each candidate m6A read
 ======================  ===============     =================================================================================================================================================
 
-``m6anet-train``
+``m6anet train``
 **************************
 
 ====================  ==========  ========================= ==============================================================================
