@@ -1,10 +1,10 @@
 import warnings
+import os
 from argparse import ArgumentParser
 from argparse import ArgumentDefaultsHelpFormatter
 import pandas as pd
 from ..utils.constants import NUM_NEIGHBORING_FEATURES
 from ..utils.dataprep_utils import parallel_index, parallel_preprocess_tx
-from ..utils import misc
 
 
 def argparser():
@@ -50,7 +50,9 @@ def argparser():
 
 def main(args):
 
-    misc.makedirs(args.out_dir)
+    if not os.path.exists(args.out_dir):
+        os.makedirs(args.out_dir)
+
     warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
 
     if not args.skip_index:
