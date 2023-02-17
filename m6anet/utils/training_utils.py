@@ -8,7 +8,7 @@ import torch
 from sklearn.metrics import accuracy_score, roc_curve, precision_recall_curve, auc
 from torch.nn.utils import clip_grad_norm_
 from torch.utils.data import DataLoader
-from typing import Optional, Tuple, Dict
+from typing import Optional, Tuple, Dict, Callable
 from m6anet.model.model import MILModel
 
 
@@ -60,7 +60,7 @@ def get_accuracy(y_true: np.ndarray, y_pred: np.ndarray) -> float:
 
 def train(model: MILModel, train_dl: DataLoader, val_dl: DataLoader,
           optimizer: torch.optim.Optimizer, n_epoch:int, device:str,
-          criterion: torch.nn.modules.loss._Loss,
+          criterion: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
           save_dir: Optional[str] = None,
           clip_grad: Optional[float] = None,
           save_per_epoch: Optional[int] = 10,
@@ -76,7 +76,8 @@ def train(model: MILModel, train_dl: DataLoader, val_dl: DataLoader,
                     optimizer (torch.optim.Optimizer): A PyTorch compatible optimizer
                     n_epoch (int): Number of epochs to train m6Anet
                     device (str): Device id to perform training with
-                    criterion (torch.nn.modules.loss._Loss): A PyTorch compatible loss function
+                    criterion (Callable[[torch.Tensor, torch.Tensor], torch.Tensor]): A loss function that takes in  PyTorch Tensor prediction and
+                                                                                      PyTorch Tensor groundtruth and output another PyTorch Tensor loss value
                     save_dir (str): Directory to save the training results
                     clip_grad (float): Maximum gradient value when using gradient clipping
                     save_per_epoch (int): Number of epoch multiple to save training checkpoint
@@ -146,7 +147,7 @@ def train(model: MILModel, train_dl: DataLoader, val_dl: DataLoader,
 
 def train_one_epoch(model: MILModel, pair_dataloader: DataLoader, device:str,
                     optimizer: torch.optim.Optimizer,
-                    criterion: torch.nn.modules.loss._Loss,
+                    criterion: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
                     clip_grad: Optional[float] = None) -> Dict:
     r'''
     Function to train m6Anet model for one epoch
@@ -156,7 +157,8 @@ def train_one_epoch(model: MILModel, pair_dataloader: DataLoader, device:str,
                     pair_dataloader (DataLoader): A PyTorch DataLoader object to load the preprocessed data.json file and train the model on
                     device (str): Device id to perform training with
                     optimizer (torch.optim.Optimizer): A PyTorch compatible optimizer
-                    criterion (torch.nn.modules.loss._Loss): A PyTorch compatible loss function
+                    criterion (Callable[[torch.Tensor, torch.Tensor], torch.Tensor]): A loss function that takes in  PyTorch Tensor prediction and
+                                                                                      PyTorch Tensor groundtruth and output another PyTorch Tensor loss value
                     clip_grad (float): Maximum gradient value when using gradient clipping
 
             Returns:
@@ -209,7 +211,7 @@ def train_one_epoch(model: MILModel, pair_dataloader: DataLoader, device:str,
 
 
 def validate(model: MILModel, val_dl: DataLoader,
-             device: str, criterion: torch.nn.modules.loss._Loss,
+             device: str, criterion: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
              n_iterations: Optional[int] = 1) -> Dict:
     r'''
     Function to validate m6Anet model on the validation dataset
@@ -218,7 +220,8 @@ def validate(model: MILModel, val_dl: DataLoader,
                     model (MILModel): An instance of MILModel class to perform Multiple Instance Learning based inference
                     val_dl (DataLoader): A PyTorch DataLoader object to load the preprocessed data.json file and validate the model on
                     device (str): Device id to perform training with
-                    criterion (torch.nn.modules.loss._Loss): A PyTorch compatible loss function
+                    criterion (Callable[[torch.Tensor, torch.Tensor], torch.Tensor]): A loss function that takes in  PyTorch Tensor prediction and
+                                                                                      PyTorch Tensor groundtruth and output another PyTorch Tensor loss value
                     n_iterations (int): Number of sampling passes on each site of the validation dataset
 
             Returns:
