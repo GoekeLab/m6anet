@@ -24,7 +24,6 @@ class NanopolishDS(Dataset):
 
     ...
 
-
     Attributes
     -----------
     allowed_mode (tuple[str]): A class attribute containing allowed mode of initialization
