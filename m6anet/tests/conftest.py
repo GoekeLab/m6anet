@@ -1,9 +1,16 @@
 import os
 import pytest
 import json
+import shutil
 import numpy as np
 from m6anet.utils.constants import NUM_NEIGHBORING_FEATURES, DEFAULT_MODEL_CONFIG, \
     DEFAULT_MODEL_WEIGHTS, DEFAULT_NORM_PATH, DEFAULT_READ_THRESHOLD
+
+
+@pytest.fixture(scope="session")
+def data_replicate(tmp_path_factory):
+    fpath = tmp_path_factory.mktemp("data_replicate")
+    return fpath
 
 
 @pytest.fixture
