@@ -11,11 +11,11 @@ The nanopolish eventalign function segments raw fast5 signals to each position w
 * ``reads.sorted.bam``: sorted bam file obtained from aligning reads.fastq to the reference transcriptome file
 * ``transcript.fa``: reference transcriptome file
 
-We have also provided a demo eventalign.txt dataset in the repository under /path/to/m6anet/demo/eventalign.txt. Please see [Nanopolish](https://github.com/jts/nanopolish) for more information.
+We have also provided a demo eventalign.txt dataset in the repository under /path/to/m6anet/m6anet/tests/data/eventalign.txt. Please see [Nanopolish](https://github.com/jts/nanopolish) for more information.
 
 Firstly, we need to preprocess the segmented raw signal file in the form of nanopolish eventalign file using 'm6anet dataprep'::
 
-    m6anet dataprep --eventalign m6anet/demo/eventalign.txt \
+    m6anet dataprep --eventalign /path/to/m6anet/m6anet/tests/data/eventalign.txt \
                     --out_dir /path/to/output --n_processes 4
 
 The output files are stored in ``/path/to/output``:
@@ -25,12 +25,12 @@ The output files are stored in ``/path/to/output``:
 * ``data.info``: File containing indexing information of data.json for faster file access and the number of reads for each DRACH positions in eventalign.txt
 * ``eventalign.index``: Index file created during dataprep to allow faster access of Nanopolish eventalign.txt during dataprep
 
-Now we can run m6anet over our data using m6anet-run_inference::
+Now we can run m6anet over our dataprep output using m6anet inference ::
 
-    m6anet inference --input_dir demo_data --out_dir demo_data --n_processes 4 --num_iterations 1000
+    m6anet inference --input_dir path/to/output --out_dir path/to/output  --n_processes 4 --num_iterations 1000
 
 Here m6Anet will sample 20 reads from each candidate site and average the probability of modification across several round of sampling according to the --num_iterations parameter.
-The output file `demo_data/data.site_proba.csv` contains the probability of modification at each individual position for each transcript. The output file will have 6 columns
+The output file `data.site_proba.csv` contains the probability of modification at each individual position for each transcript. The output file will have 6 columns
 
 * ``transcript_id``: The transcript id of the predicted position
 * ``transcript_position``: The transcript position of the predicted position
@@ -39,7 +39,7 @@ The output file `demo_data/data.site_proba.csv` contains the probability of modi
 * ``kmer``: The 5-mer motif of a given site
 * ``mod_ratio``: The estimated percentage of reads in a given site that is modified
 
-The output file `demo_data/data.indiv_proba.csv` contains the probability of modification for each read
+The output file `data.indiv_proba.csv` contains the probability of modification for each read
 
 * ``transcript_id``: The transcript id of the predicted position
 * ``transcript_position``: The transcript position of the predicted position
@@ -51,4 +51,4 @@ based on the ``probability_modified`` column, which can be relaxed at the expens
 
 m6Anet also supports pooling over multiple replicates. To do this, simply input multiple folders containing m6anet-dataprep outputs::
 
-        m6anet inference --input_dir demo_data_1 demo_data_2 ... --out_dir demo_data --n_processes 4 --num_iterations 1000
+        m6anet inference --input_dir data_folder_1 data_folder_2 ... --out_dir output_folder --n_processes 4 --num_iterations 1000

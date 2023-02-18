@@ -1,31 +1,92 @@
-import numpy as np
+r"""
+This module is a collection functions used during training of m6Anet
+"""
 import os
-import torch
 import time
+import numpy as np
+import torch
 from sklearn.metrics import accuracy_score, roc_curve, precision_recall_curve, auc
 from torch.nn.utils import clip_grad_norm_
+from torch.utils.data import DataLoader
+from typing import Optional, Tuple, Dict, Callable
+from m6anet.model.model import MILModel
 
 
-def get_roc_auc(y_true, y_pred):
+def get_roc_auc(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    r'''
+    Function to compute Receiving Operating Characteristic (ROC) AUC of m6Anet prediction against ground truth
+
+            Args:
+                    y_true (np.ndarray): A NumPy array containing th ground truth
+                    y_true (np.ndarray): A NumPy array containing th ground truth
+
+            Returns:
+                    roc_auc (float): ROC AUC of the prediction
+    '''
     fpr, tpr, _  = roc_curve(y_true, y_pred)
     roc_auc = auc(fpr, tpr)
     return roc_auc
 
 
-def get_pr_auc(y_true, y_pred):
+def get_pr_auc(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    r'''
+    Function to compute Precision-Recall (PR) AUC of m6Anet prediction against ground truth
+
+            Args:
+                    y_true (np.ndarray): A NumPy array containing th ground truth
+                    y_true (np.ndarray): A NumPy array containing th ground truth
+
+            Returns:
+                    pr_auc (float): PR AUC of the prediction
+    '''
     precision, recall, _ = precision_recall_curve(y_true, y_pred, pos_label=1)
     pr_auc = auc(recall, precision)
     return pr_auc
 
 
-def get_accuracy(y_true, y_pred):
+def get_accuracy(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    r'''
+    Function to compute accuracy of m6Anet prediction against ground truth
+
+            Args:
+                    y_true (np.ndarray): A NumPy array containing th ground truth
+                    y_true (np.ndarray): A NumPy array containing th ground truth
+
+            Returns:
+                    accuracy_score (float): Accuracy of the prediction
+    '''
     return accuracy_score(y_true, y_pred)
 
 
-def train(model, train_dl, val_dl, optimizer, n_epoch, device, criterion,
-          save_dir=None, clip_grad=None,
-          save_per_epoch=10, epoch_increment=0, n_iterations=1):
+def train(model: MILModel, train_dl: DataLoader, val_dl: DataLoader,
+          optimizer: torch.optim.Optimizer, n_epoch:int, device:str,
+          criterion: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
+          save_dir: Optional[str] = None,
+          clip_grad: Optional[float] = None,
+          save_per_epoch: Optional[int] = 10,
+          epoch_increment: Optional[int] = 0,
+          n_iterations: Optional[int] = 1) -> Tuple[Dict, Dict]:
+    r'''
+    The main function to train m6Anet model
 
+            Args:
+                    model (MILModel): An instance of MILModel class to perform Multiple Instance Learning based inference
+                    train_dl (DataLoader): A PyTorch DataLoader object to load the preprocessed data.json file and train the model on
+                    val_dl (DataLoader): A PyTorch DataLoader object to load the preprocessed data.json file and validate the model on
+                    optimizer (torch.optim.Optimizer): A PyTorch compatible optimizer
+                    n_epoch (int): Number of epochs to train m6Anet
+                    device (str): Device id to perform training with
+                    criterion (Callable[[torch.Tensor, torch.Tensor], torch.Tensor]): A loss function that takes in  PyTorch Tensor prediction and
+                                                                                      PyTorch Tensor groundtruth and output another PyTorch Tensor loss value
+                    save_dir (str): Directory to save the training results
+                    clip_grad (float): Maximum gradient value when using gradient clipping
+                    save_per_epoch (int): Number of epoch multiple to save training checkpoint
+                    epoch_increment (int): Increment to the number of current epoch, only used when resuming training
+                    n_iterations (int): Number of sampling passes on each site of the validation dataset
+
+            Returns:
+                    (train_results, val_results) (tuple[dict, dict]): A tuple containing training results and validation results
+    '''
     assert(save_per_epoch <= n_epoch)
 
     total_train_time = 0
@@ -84,7 +145,25 @@ def train(model, train_dl, val_dl, optimizer, n_epoch, device, criterion,
     return train_results, val_results
 
 
-def train_one_epoch(model, pair_dataloader, device, optimizer, criterion, clip_grad=None):
+def train_one_epoch(model: MILModel, pair_dataloader: DataLoader, device:str,
+                    optimizer: torch.optim.Optimizer,
+                    criterion: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
+                    clip_grad: Optional[float] = None) -> Dict:
+    r'''
+    Function to train m6Anet model for one epoch
+
+            Args:
+                    model (MILModel): An instance of MILModel class to perform Multiple Instance Learning based inference
+                    pair_dataloader (DataLoader): A PyTorch DataLoader object to load the preprocessed data.json file and train the model on
+                    device (str): Device id to perform training with
+                    optimizer (torch.optim.Optimizer): A PyTorch compatible optimizer
+                    criterion (Callable[[torch.Tensor, torch.Tensor], torch.Tensor]): A loss function that takes in  PyTorch Tensor prediction and
+                                                                                      PyTorch Tensor groundtruth and output another PyTorch Tensor loss value
+                    clip_grad (float): Maximum gradient value when using gradient clipping
+
+            Returns:
+                    loss_results (dict): A dictionary containing training metrics such as loss objective, accuracy, roc auc, and pr auc of the this training iteration
+    '''
     model.train()
     train_loss_list = []
 
@@ -131,10 +210,23 @@ def train_one_epoch(model, pair_dataloader, device, optimizer, criterion, clip_g
     return loss_results
 
 
-def validate(model, val_dl, device, criterion, n_iterations=1):
-    """
-    Function to run validation
-    """
+def validate(model: MILModel, val_dl: DataLoader,
+             device: str, criterion: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
+             n_iterations: Optional[int] = 1) -> Dict:
+    r'''
+    Function to validate m6Anet model on the validation dataset
+
+            Args:
+                    model (MILModel): An instance of MILModel class to perform Multiple Instance Learning based inference
+                    val_dl (DataLoader): A PyTorch DataLoader object to load the preprocessed data.json file and validate the model on
+                    device (str): Device id to perform training with
+                    criterion (Callable[[torch.Tensor, torch.Tensor], torch.Tensor]): A loss function that takes in  PyTorch Tensor prediction and
+                                                                                      PyTorch Tensor groundtruth and output another PyTorch Tensor loss value
+                    n_iterations (int): Number of sampling passes on each site of the validation dataset
+
+            Returns:
+                    val_results (dict): A dictionary containing validation metrics such as loss objective, accuracy, roc auc, and pr auc
+    '''
     model.eval()
     all_y_true = None
     all_y_pred = []

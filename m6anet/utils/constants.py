@@ -1,3 +1,6 @@
+r"""
+This module is a collection of builder functions used during training and inference for building Python object from configuration files
+"""
 import pkg_resources
 from itertools import product
 import numpy as np

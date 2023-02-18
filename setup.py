@@ -36,6 +36,7 @@ setup(
             'torch==1.6.0',
             'toml==0.10.2',
             'tqdm',
+            'typing-extensions'
             ],
     entry_points = {
         'console_scripts': [
