@@ -1,11 +1,11 @@
-
-
 name: run-test
 
 on:
   push:
     branches: [development, master]
   pull_request:
+    branches: [development, master]
+  merge:
     branches: [development, master]
 
   # Allows you to run this workflow manually from the Actions tab
