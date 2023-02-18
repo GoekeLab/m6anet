@@ -40,8 +40,12 @@ setup(
             ],
     entry_points = {
         'console_scripts': [
-            '{0} = {0}:main'.format(__pkg_name__)
-        ]},
+            '{0} = {0}:main'.format(__pkg_name__),
+            "m6anet-dataprep={}.deprecated.dataprep:main".format(__pkg_name__),
+            "m6anet-run_inference={}.deprecated.inference:main".format(__pkg_name__),
+            "m6anet-compute_norm_factors={}.deprecated.compute_norm_factors:main".format(__pkg_name__),
+            "m6anet-train={}.deprecated.train:main".format(__pkg_name__)]
+        },
     classifiers=[
         # Trove classifiers
         # (https://pypi.python.org/pypi?%3Aaction=list_classifiers)
