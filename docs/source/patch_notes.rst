@@ -9,8 +9,8 @@ API Changes
 
 The m6Anet functions for preprocessing, inference and training have now been simplified. We now provide a single entry point for all m6anet functionalities through the m6anet module. This means
 that all the old functionalities of m6Anet is now available through the m6anet module call,
-such as m6anet dataprep, m6anet inference and m6anet train functions. The command m6anet-dataprep,
-m6anet-run_inference and m6anet-train are deprecated and will be removed in the next version. Please check our updated :ref:`Quickstart page <quickstart>`
+such as ``m6anet dataprep``, ``m6anet inference`` and ``m6anet train`` functions. The command ``m6anet-dataprep``,
+``m6anet-run_inference`` and ``m6anet-train`` are deprecated and will be removed in the next version. Please check our updated :ref:`Quickstart page <quickstart>`
 and :ref:`Training page <training>` for more details on running m6Anet.
 
 We have also made some changes to m6anet dataprep function. Previously m6anet-dataprep produces data.index and data.readcount files in order to run inference,
@@ -76,8 +76,8 @@ on the sites predicted to be modified in wild-type samples (probability :math:`\
 
 ----
 
-Here we recommend the following setting to run this model:
+In order to run the Arabidopsis model, please add the following command when running m6anet inference
 
 * ``--read_proba_threshold : 0.0032978046219796``
 * ``--model_state_dict : m6anet/m6anet/model/model_states/arabidopsis_virc.pt``
-* ``--norm_path : m6anet/m6anet/model/norm_factors/norm_factors_virc.joblib``: The number of reads for that particular position
+* ``--norm_path : m6anet/m6anet/model/norm_factors/norm_factors_virc.joblib``
