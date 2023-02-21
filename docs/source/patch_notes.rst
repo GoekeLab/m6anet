@@ -1,9 +1,12 @@
 .. _patch_notes:
 
 **************************
-Release Note: m6Anet 2.0.0
+Release Note
 **************************
 
+*************
+m6Anet 2.0.0
+*************
 
 Common Entry Point for m6Anet Functions
 #######################################
