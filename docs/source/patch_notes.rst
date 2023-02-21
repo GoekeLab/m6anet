@@ -1,19 +1,24 @@
 .. _patch_notes:
 
 **************************
-Release Note
+Release Note 2.0.0
 **************************
 
-*************
-m6Anet 2.0.0
-*************
-
-Common Entry Point for m6Anet Functions
+API Changes
 #######################################
 
 The m6Anet functions for preprocessing, inference and training have now been simplified. We now provide a single entry point for all m6anet functionalities through the m6anet module. This means
-that all the old functionalities of m6Anet is now available through the m6anet module call, such as m6anet dataprep, m6anet inference and m6anet train functions. Please check our updated :ref:`Quickstart page <quickstart>`
-and :ref:`Training page <training>` for more details.
+that all the old functionalities of m6Anet is now available through the m6anet module call,
+such as m6anet dataprep, m6anet inference and m6anet train functions. The command m6anet-dataprep,
+m6anet-run_inference and m6anet-train are deprecated and will be removed in the next version. Please check our updated :ref:`Quickstart page <quickstart>`
+and :ref:`Training page <training>` for more details on running m6Anet.
+
+We have also made some changes to m6anet dataprep function. Previously m6anet-dataprep produces data.index and data.readcount files in order to run inference,
+and we realized that this can be simplified by combining the two files together. The current m6anet dataprep
+(and also the deprecated m6anet-dataprep) now produces a single data.info file that combines the information
+from both data.index and data.readcount. Furthermore, m6anet inference
+(also the deprecated m6anet-run_inference) now requires data.info file to be
+present in the input directory.
 
 Faster and Better Inference Implementation
 ##########################################
@@ -71,6 +76,8 @@ on the sites predicted to be modified in wild-type samples (probability :math:`\
 
 ----
 
-Here we recommend setting `--read_proba_threshold` of the inference function to 0.0032978046219796 instead of the default.
-The arabidopsis model weight can be found in m6anet/m6anet/model/model_states/arabidopsis_virc.pt while the normalization
-factors can be found in m6anet/m6anet/model/norm_factors/norm_factors_virc.joblib.
+Here we recommend the following setting to run this model:
+
+* ``--read_proba_threshold : 0.0032978046219796``
+* ``--model_state_dict : m6anet/m6anet/model/model_states/arabidopsis_virc.pt``
+* ``--norm_path : m6anet/m6anet/model/norm_factors/norm_factors_virc.joblib``: The number of reads for that particular position
