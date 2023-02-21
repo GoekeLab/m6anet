@@ -26,16 +26,18 @@ Argument name                       Required    Default value         Descriptio
 --min_segment_count=NUM             No          1                     Minimum read counts over each candidate m6A segment
 =================================   ==========  ===================  ============================================================================================================
 
+
 * Output
 
-======================  ==============  ===============================================================================================================================================================
+======================  ==============  ===================================================================================================================================================================================================================
 File name               File type       Description
-======================  ==============  ===============================================================================================================================================================
+======================  ==============  ===================================================================================================================================================================================================================
 eventalign.index        csv             File index indicating the position in the `eventalign.txt` file (the output of nanopolish eventalign) where the segmentation information of each read index is stored, allowing a random access.
 data.json               json            Intensity level mean for each position.
-data.index              csv             File index indicating the position in the `data.json` file where the intensity level means across positions of each gene is stored, allowing a random access.
-data.readcount          csv             Summary of readcounts per gene.
-======================  ==============  ===============================================================================================================================================================
+data.info               csv             File summarizing number of expressed reads per segment and index indicating the position in the `data.json` file where the intensity level means across positions of each gene is stored, allowing a random access.
+data.log                csv             Summary of completed transcripts
+======================  ==============  ===================================================================================================================================================================================================================
+
 
 ``m6anet inference``
 ************************
@@ -47,7 +49,7 @@ Output files from ``m6anet dataprep``.
 ==========================    ==========  ========================= ==============================================================================
 Argument name                 Required    Default value             Description
 ==========================    ==========  ========================= ==============================================================================
---input_dir=DIR               Yes         NA                        Input directory that contains data.json, data.index, and data.readcount from m6anet-dataprep
+--input_dir=DIR               Yes         NA                        Input directory that contains data.json, data.info from m6anet-dataprep
 --out_dir=DIR                 Yes         NA                        Output directory for the inference results from m6anet
 --model_config=FILE           No          prod_pooling.toml         Model architecture specifications. Please see examples in m6anet/model/configs/model_configs/prod_pooling.toml
 --model_state_dict=FILE       No          prod_pooling_pr_auc.pt    Model weights to be used for inference. Please see examples in m6anet/model/model_states/
