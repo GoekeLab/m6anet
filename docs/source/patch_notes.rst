@@ -44,8 +44,8 @@ read probability in `data.indiv_proba.csv` file before sampling the required amo
 Arabidopsis Trained m6Anet
 ##########################
 
-We have also included m6Anet model trained on the Arabidopsis VIRc dataset from our [paper](https://www.nature.com/articles/s41592-022-01666-1) as an option for users who are looking to study
-m6A modification on plant genomes or to aggregate predictions from different m6Anet models on their datasets. Here we present single molecular probability results on synthetic RNA from the [curlcake dataset](https://www.nature.com/articles/s41467-019-11713-9)
+We have also included m6Anet model trained on the Arabidopsis VIRc dataset from our `paper <https://www.nature.com/articles/s41592-022-01666-1>`_ as an option for users who are looking to study
+m6A modification on plant genomes or to aggregate predictions from different m6Anet models on their datasets. Here we present single molecular probability results on synthetic RNA from the `curlcake dataset <https://www.nature.com/articles/s41467-019-11713-9>`_
 
 ----
 
@@ -56,7 +56,7 @@ m6A modification on plant genomes or to aggregate predictions from different m6A
 ----
 
 The single-molecule m6A predictions of the Arabidopsis model seems to be comparable with the human model with ROC AUC of 0.89 and PR AUC of 0.90 on the synthetic. We also validate the ability to predict per-molecule
-modifications of the Arabidopsis model on the human HEK293T METTL3-KO and wild-type samples that were mixed to achieve an expected relative m6A stoichiometry of 0%, 25%, 50%, 75%, and 100% from [xPore](https://www.nature.com/articles/s41587-021-00949-w)
+modifications of the Arabidopsis model on the human HEK293T METTL3-KO and wild-type samples that were mixed to achieve an expected relative m6A stoichiometry of 0%, 25%, 50%, 75%, and 100% from `xPore <https://www.nature.com/articles/s41587-021-00949-w>`_
 on the sites predicted to be modified in wild-type samples (probability :math:`\geq 0.7`)
 ) As we can see, from the 1041 shared sites that we inspect across the HEK293T mixtures, the median prediction of the model follows the expected modification ratio.
 
