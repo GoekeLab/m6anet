@@ -27,7 +27,7 @@ Contents
    cmd
    training
    help
-
+   patch_notes
 Citing m6Anet
 --------------------------
 If you use m6Anet in your research, please cite
