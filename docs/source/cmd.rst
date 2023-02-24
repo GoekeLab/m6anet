@@ -34,7 +34,7 @@ File name               File type       Description
 ======================  ==============  ===============================================================================================================================================================
 eventalign.index        csv             File index indicating the position in the `eventalign.txt` file (the output of nanopolish eventalign) where the segmentation information of each read index is stored, allowing a random access.
 data.json               json            Intensity level mean for each position.
-data.info              csv              File containing readcounts per transcript and index indicating the position in the `data.json` file where the intensity level means across positions of each gene is stored, allowing a random access.
+data.info               csv              File containing readcounts per transcript and index indicating the position in the `data.json` file where the intensity level means across positions of each gene is stored, allowing a random access.
 ======================  ==============  ===============================================================================================================================================================
 
 ``m6anet inference``
