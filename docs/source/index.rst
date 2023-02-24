@@ -28,6 +28,8 @@ Contents
    training
    help
    patch_notes
+   citing
+   
 Citing m6Anet
 --------------------------
 If you use m6Anet in your research, please cite
