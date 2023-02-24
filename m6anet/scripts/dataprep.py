@@ -45,6 +45,9 @@ def argparser():
     parser.add_argument('--n_neighbors',
                         help='number of neighboring features to extract.',
                         default=NUM_NEIGHBORING_FEATURES, type=int)
+    parser.add_argument('--compress',
+                        help='number of neighboring features to extract.',
+                        default=False, action='store_true')
     return parser
 
 
@@ -64,4 +67,4 @@ def main(args):
 
     parallel_preprocess_tx(args.eventalign, args.out_dir, args.n_processes,
                            args.readcount_min, args.readcount_max, args.n_neighbors,
-                           args.min_segment_count)
+                           args.min_segment_count, args.compress)

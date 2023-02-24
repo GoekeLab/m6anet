@@ -52,7 +52,8 @@ def dataprep_args(eventalign_fpath, tmp_path):
             'readcount_max': 1000,
             'min_segment_count': 1,
             'n_neighbors': NUM_NEIGHBORING_FEATURES,
-            'n_processes': 4
+            'n_processes': 4,
+            'compress': False
             }
 
 
