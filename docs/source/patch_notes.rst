@@ -63,7 +63,7 @@ data.json significantly without compromising model performance.
 Arabidopsis Trained m6Anet
 ##########################
 
-We have also included m6Anet model trained on the Arabidopsis VIRc dataset from our `paper <https://www.nature.com/articles/s41592-022-01666-1>`_ as an option for users who are looking to study
+We have also included m6Anet model trained on the Arabidopsis `VIRc dataset <https://elifesciences.org/articles/78808>`_ from our `paper <https://www.nature.com/articles/s41592-022-01666-1>`_ as an option for users who are looking to study
 m6A modification on plant genomes or to aggregate predictions from different m6Anet models on their datasets. Here we present single molecular probability results on synthetic RNA from the `curlcake dataset <https://www.nature.com/articles/s41467-019-11713-9>`_
 
 ----
