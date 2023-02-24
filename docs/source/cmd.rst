@@ -5,25 +5,26 @@ Command line arguments
 
 We provide 2 main scripts to run m6A prediction as the following.
 
-``m6anet-dataprep``
+``m6anet dataprep``
 ********************
 
 * Input
 
-Output files from ``nanopolish eventalign``
+Output files from ``nanopolish eventalign``. Please refer to :ref:`Quickstart page <quickstart>` for more details on running nanopolish.
 
 =================================   ==========  ===================  ============================================================================================================
 Argument name                       Required    Default value         Description
 =================================   ==========  ===================  ============================================================================================================
---eventalign=FILE                   Yes         NA                    Eventalign filepath, the output from nanopolish.         
+--eventalign=FILE                   Yes         NA                    Eventalign filepath, the output from nanopolish.
 --out_dir=DIR                       Yes         NA                    Output directory.
 --n_processes=NUM                   No          1                     Number of processes to run.
 --chunk_size=NUM                    No          1000000               chunksize argument for pandas read csv function on the eventalign input
 --readcount_max=NUM                 No          1000                  Maximum read counts per gene.
 --readcount_min=NUM                 No          1                     Minimum read counts per gene.
---index                             No          True                  To skip indexing the eventalign nanopolish output, can only be used if the index has been created before
+--skip_index                        No          False                 To skip indexing the eventalign nanopolish output, can only be used if the index has been created before
 --n_neighbors=NUM                   No          1                     The number of flanking positions to process
 --min_segment_count=NUM             No          1                     Minimum read counts over each candidate m6A segment
+--compress                          No          False                 Round down output features to 3 decimal places
 =================================   ==========  ===================  ============================================================================================================
 
 * Output
@@ -33,16 +34,15 @@ File name               File type       Description
 ======================  ==============  ===============================================================================================================================================================
 eventalign.index        csv             File index indicating the position in the `eventalign.txt` file (the output of nanopolish eventalign) where the segmentation information of each read index is stored, allowing a random access.
 data.json               json            Intensity level mean for each position.
-data.index              csv             File index indicating the position in the `data.json` file where the intensity level means across positions of each gene is stored, allowing a random access.
-data.readcount          csv             Summary of readcounts per gene.
+data.info               csv              File containing readcounts per transcript and index indicating the position in the `data.json` file where the intensity level means across positions of each gene is stored, allowing a random access.
 ======================  ==============  ===============================================================================================================================================================
 
-``m6anet-run_inference``
+``m6anet inference``
 ************************
 
 * Input
 
-Output files from ``m6anet-dataprep``.
+Output files from ``m6anet dataprep``.
 
 ==========================    ==========  ========================= ==============================================================================
 Argument name                 Required    Default value             Description
@@ -54,7 +54,6 @@ Argument name                 Required    Default value             Description
 --batch_size=NUM              No          64                        Number of sites to be loaded each time for inference
 --n_processes=NUM             No          1                         Number of processes to run.
 --num_iterations=NUM          No          5                         Number of times m6anet iterates through each potential m6a sites.
---infer_mod_rate              No          False                     Whether to output m6A modification stoichiometry for each candidate site
 --read_proba_threshold=NUM    No          0.033379376               Threshold for each individual read to be considered modified during stoichiometry calculation
 ==========================    ==========  ========================= ==============================================================================
 
@@ -63,10 +62,11 @@ Argument name                 Required    Default value             Description
 ======================  ===============     =================================================================================================================================================
 File name                File type           Description
 ======================  ===============     =================================================================================================================================================
-data.result.csv.gz      csv.gz              Result table in compressed form  
+data.site_proba.csv     csv                 Result table for each candidate m6A site
+data.indiv_proba.csv    csv                 Result table for each candidate m6A read
 ======================  ===============     =================================================================================================================================================
 
-``m6anet-train``
+``m6anet train``
 **************************
 
 ====================  ==========  ========================= ==============================================================================

@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import warnings
 import torch
 import joblib
 import toml
@@ -52,7 +53,10 @@ def argparser():
     return parser
 
 
-def main(args):
+def main():
+    warnings.warn('m6anet-train is deprecated and going to be removed in the next release. Please use m6anet train instead', DeprecationWarning, stacklevel=2)
+
+    args = argparser().parse_args()
 
     seed = args.seed
     np.random.seed(seed)
@@ -129,3 +133,7 @@ def main(args):
                                                  pr_auc=test_results["pr_auc"]))
         print("=====================================")
         joblib.dump(test_results, os.path.join(save_dir, "test_results_{}.joblib".format(selection_criterion)))
+
+
+if __name__ == '__main__':
+    main()

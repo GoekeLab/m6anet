@@ -1,40 +1,100 @@
-import numpy as np
+r"""
+This module is a collection functions used during training of m6Anet
+"""
 import os
-import torch
 import time
-from collections import OrderedDict
+import numpy as np
+import torch
 from sklearn.metrics import accuracy_score, roc_curve, precision_recall_curve, auc
 from torch.nn.utils import clip_grad_norm_
+from torch.utils.data import DataLoader
+from typing import Optional, Tuple, Dict, Callable
+from m6anet.model.model import MILModel
 
 
-def get_roc_auc(y_true, y_pred):
+def get_roc_auc(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    r'''
+    Function to compute Receiving Operating Characteristic (ROC) AUC of m6Anet prediction against ground truth
+
+            Args:
+                    y_true (np.ndarray): A NumPy array containing th ground truth
+                    y_true (np.ndarray): A NumPy array containing th ground truth
+
+            Returns:
+                    roc_auc (float): ROC AUC of the prediction
+    '''
     fpr, tpr, _  = roc_curve(y_true, y_pred)
     roc_auc = auc(fpr, tpr)
     return roc_auc
 
 
-def get_pr_auc(y_true, y_pred):
+def get_pr_auc(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    r'''
+    Function to compute Precision-Recall (PR) AUC of m6Anet prediction against ground truth
+
+            Args:
+                    y_true (np.ndarray): A NumPy array containing th ground truth
+                    y_true (np.ndarray): A NumPy array containing th ground truth
+
+            Returns:
+                    pr_auc (float): PR AUC of the prediction
+    '''
     precision, recall, _ = precision_recall_curve(y_true, y_pred, pos_label=1)
     pr_auc = auc(recall, precision)
     return pr_auc
 
 
-def get_accuracy(y_true, y_pred):
+def get_accuracy(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    r'''
+    Function to compute accuracy of m6Anet prediction against ground truth
+
+            Args:
+                    y_true (np.ndarray): A NumPy array containing th ground truth
+                    y_true (np.ndarray): A NumPy array containing th ground truth
+
+            Returns:
+                    accuracy_score (float): Accuracy of the prediction
+    '''
     return accuracy_score(y_true, y_pred)
 
 
-def train(model, train_dl, val_dl, optimizer, n_epoch, device, criterion,
-          save_dir=None, clip_grad=None,
-          save_per_epoch=10, epoch_increment=0, n_iterations=1):
-    
+def train(model: MILModel, train_dl: DataLoader, val_dl: DataLoader,
+          optimizer: torch.optim.Optimizer, n_epoch:int, device:str,
+          criterion: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
+          save_dir: Optional[str] = None,
+          clip_grad: Optional[float] = None,
+          save_per_epoch: Optional[int] = 10,
+          epoch_increment: Optional[int] = 0,
+          n_iterations: Optional[int] = 1) -> Tuple[Dict, Dict]:
+    r'''
+    The main function to train m6Anet model
+
+            Args:
+                    model (MILModel): An instance of MILModel class to perform Multiple Instance Learning based inference
+                    train_dl (DataLoader): A PyTorch DataLoader object to load the preprocessed data.json file and train the model on
+                    val_dl (DataLoader): A PyTorch DataLoader object to load the preprocessed data.json file and validate the model on
+                    optimizer (torch.optim.Optimizer): A PyTorch compatible optimizer
+                    n_epoch (int): Number of epochs to train m6Anet
+                    device (str): Device id to perform training with
+                    criterion (Callable[[torch.Tensor, torch.Tensor], torch.Tensor]): A loss function that takes in  PyTorch Tensor prediction and
+                                                                                      PyTorch Tensor groundtruth and output another PyTorch Tensor loss value
+                    save_dir (str): Directory to save the training results
+                    clip_grad (float): Maximum gradient value when using gradient clipping
+                    save_per_epoch (int): Number of epoch multiple to save training checkpoint
+                    epoch_increment (int): Increment to the number of current epoch, only used when resuming training
+                    n_iterations (int): Number of sampling passes on each site of the validation dataset
+
+            Returns:
+                    (train_results, val_results) (tuple[dict, dict]): A tuple containing training results and validation results
+    '''
     assert(save_per_epoch <= n_epoch)
-    
+
     total_train_time = 0
     train_results = {}
     val_results = {}
-    
+
     for epoch in range(1, n_epoch + 1):
-        train_results_epoch = train_one_epoch(model, train_dl, device, optimizer, criterion, 
+        train_results_epoch = train_one_epoch(model, train_dl, device, optimizer, criterion,
                                               clip_grad=clip_grad)
         val_results_epoch = validate(model, val_dl, device, criterion, n_iterations)
 
@@ -42,7 +102,7 @@ def train(model, train_dl, val_dl, optimizer, n_epoch, device, criterion,
         print("Epoch:[{epoch}/{n_epoch}] \t "
               "train time:{train_time:.0f}s \t "
               "val time:{val_time:.0f}s \t "
-              "({total:.0f}s)".format(epoch=epoch + epoch_increment, 
+              "({total:.0f}s)".format(epoch=epoch + epoch_increment,
                                       n_epoch = n_epoch + epoch_increment,
                                       train_time=train_results_epoch["compute_time"],
                                       val_time=val_results_epoch["compute_time"],
@@ -52,7 +112,7 @@ def train(model, train_dl, val_dl, optimizer, n_epoch, device, criterion,
               "Train PR AUC: {pr_auc:.3f}".format(loss=train_results_epoch["avg_loss"],
                                                   roc_auc=train_results_epoch["roc_auc"],
                                                   pr_auc=train_results_epoch["pr_auc"]))
-   
+
         print("Val Loss:{loss:.2f} \t "
               "Val ROC AUC: {roc_auc:.3f}\t "
               "Val PR AUC: {pr_auc:.3f}".format(loss=val_results_epoch["avg_loss"],
@@ -85,7 +145,25 @@ def train(model, train_dl, val_dl, optimizer, n_epoch, device, criterion,
     return train_results, val_results
 
 
-def train_one_epoch(model, pair_dataloader, device, optimizer, criterion, clip_grad=None):
+def train_one_epoch(model: MILModel, pair_dataloader: DataLoader, device:str,
+                    optimizer: torch.optim.Optimizer,
+                    criterion: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
+                    clip_grad: Optional[float] = None) -> Dict:
+    r'''
+    Function to train m6Anet model for one epoch
+
+            Args:
+                    model (MILModel): An instance of MILModel class to perform Multiple Instance Learning based inference
+                    pair_dataloader (DataLoader): A PyTorch DataLoader object to load the preprocessed data.json file and train the model on
+                    device (str): Device id to perform training with
+                    optimizer (torch.optim.Optimizer): A PyTorch compatible optimizer
+                    criterion (Callable[[torch.Tensor, torch.Tensor], torch.Tensor]): A loss function that takes in  PyTorch Tensor prediction and
+                                                                                      PyTorch Tensor groundtruth and output another PyTorch Tensor loss value
+                    clip_grad (float): Maximum gradient value when using gradient clipping
+
+            Returns:
+                    loss_results (dict): A dictionary containing training metrics such as loss objective, accuracy, roc auc, and pr auc of the this training iteration
+    '''
     model.train()
     train_loss_list = []
 
@@ -105,15 +183,15 @@ def train_one_epoch(model, pair_dataloader, device, optimizer, criterion, clip_g
 
         optimizer.step()
         optimizer.zero_grad()
-                
+
         train_loss_list.append(loss.item())
-        
+
         y_true = y_true.detach().cpu().numpy()
         y_pred = y_pred.detach().cpu().numpy()
 
 
         all_y_true.extend(y_true)
-        
+
         if (len(y_pred.shape) == 1) or (y_pred.shape[1] == 1):
             all_y_pred.extend(y_pred.flatten())
 
@@ -132,10 +210,23 @@ def train_one_epoch(model, pair_dataloader, device, optimizer, criterion, clip_g
     return loss_results
 
 
-def validate(model, val_dl, device, criterion, n_iterations=1):
-    """
-    Function to run validation
-    """
+def validate(model: MILModel, val_dl: DataLoader,
+             device: str, criterion: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
+             n_iterations: Optional[int] = 1) -> Dict:
+    r'''
+    Function to validate m6Anet model on the validation dataset
+
+            Args:
+                    model (MILModel): An instance of MILModel class to perform Multiple Instance Learning based inference
+                    val_dl (DataLoader): A PyTorch DataLoader object to load the preprocessed data.json file and validate the model on
+                    device (str): Device id to perform training with
+                    criterion (Callable[[torch.Tensor, torch.Tensor], torch.Tensor]): A loss function that takes in  PyTorch Tensor prediction and
+                                                                                      PyTorch Tensor groundtruth and output another PyTorch Tensor loss value
+                    n_iterations (int): Number of sampling passes on each site of the validation dataset
+
+            Returns:
+                    val_results (dict): A dictionary containing validation metrics such as loss objective, accuracy, roc auc, and pr auc
+    '''
     model.eval()
     all_y_true = None
     all_y_pred = []
@@ -160,7 +251,7 @@ def validate(model, val_dl, device, criterion, n_iterations=1):
                 all_y_true = y_true_tmp
 
             all_y_pred.append(y_pred_tmp)
-            
+
     compute_time = time.time() - start
     y_pred_avg = np.mean(all_y_pred, axis=0)
     all_y_true = np.array(all_y_true).flatten()
@@ -175,59 +266,3 @@ def validate(model, val_dl, device, criterion, n_iterations=1):
     val_results["avg_loss"] = criterion(torch.Tensor(y_pred_avg), torch.Tensor(all_y_true)).item()
 
     return val_results
-
-
-def inference(model, dl, device, n_iterations=1):
-    """
-    Run inference on unlabelled dataset
-    """
-    model.eval()
-    all_y_pred = []
-    all_kmers = None
-    kmer_maps = dl.dataset.int_to_kmer
-    with torch.no_grad():
-        for _ in range(n_iterations):
-            kmers = []
-            y_pred_tmp = []
-            for batch in dl:
-                X = OrderedDict({key: val.to(device) for key, val in batch.items()})
-
-                if all_kmers is None:
-                    kmers.append([kmer_maps[x[0][x.shape[-1] // 2].item()] for x in X['kmer']])
-
-                y_pred = model(X)
-                y_pred = y_pred.detach().cpu().numpy()
-                if (len(y_pred.shape) == 1) or (y_pred.shape[1] == 1):
-                    y_pred_tmp.extend(y_pred.flatten())
-                else:
-                    y_pred_tmp.extend(y_pred[:, 1])
-
-            all_y_pred.append(y_pred_tmp)
-
-            if all_kmers is None:
-                all_kmers = np.concatenate(kmers)
-    return np.mean(all_y_pred, axis=0), all_kmers
-
-
-def group_probs(probs, n_reads):
-    i = 0
-    grouped_probs = []
-    for n_read in n_reads:
-        grouped_probs.append(probs[i: i + n_read])
-        i += n_read
-    return grouped_probs
-
-
-def infer_mod_ratio(model, mod_ratio_dl, device, read_proba_threshold):
-    model.eval()
-    with torch.no_grad():
-        read_probs, read_lengths = [], []
-        for data in iter(mod_ratio_dl):
-            features, kmers, n_reads = data
-            features = model.get_read_representation({'X': features.to(device), 'kmer': kmers.to(device)})
-            probs = model.pooling_filter.probability_layer(features).flatten()
-            read_probs.append(probs.detach().cpu().numpy())
-            read_lengths.append(n_reads.numpy())
-            
-        read_probs = group_probs(np.concatenate(read_probs), np.concatenate(read_lengths))
-        return np.array([np.mean(x >= read_proba_threshold) for x in read_probs])

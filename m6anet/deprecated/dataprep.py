@@ -45,18 +45,17 @@ def argparser():
     parser.add_argument('--n_neighbors',
                         help='number of neighboring features to extract.',
                         default=NUM_NEIGHBORING_FEATURES, type=int)
-    parser.add_argument('--compress',
-                        help='number of neighboring features to extract.',
-                        default=False, action='store_true')
     return parser
 
 
-def main(args):
+def main():
+    warnings.warn('m6anet-dataprep is deprecated and going to be removed in the next release. Please use m6anet dataprep instead', DeprecationWarning, stacklevel=2)
+    warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
+
+    args = argparser().parse_args()
 
     if not os.path.exists(args.out_dir):
         os.makedirs(args.out_dir)
-
-    warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
 
     if not args.skip_index:
         parallel_index(args.eventalign, args.chunk_size,
@@ -67,4 +66,7 @@ def main(args):
 
     parallel_preprocess_tx(args.eventalign, args.out_dir, args.n_processes,
                            args.readcount_min, args.readcount_max, args.n_neighbors,
-                           args.min_segment_count, args.compress)
+                           args.min_segment_count)
+
+if __name__ == '__main__':
+    main()

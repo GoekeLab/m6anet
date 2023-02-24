@@ -1,11 +1,18 @@
 """Setup for the m6anet package."""
-
+import os
+import re
 from setuptools import setup,find_packages
 
 __pkg_name__ = 'm6anet'
+verstrline = open(os.path.join(__pkg_name__, '__init__.py'), 'r', encoding='utf-8').read()
+vsre = r"^__version__ = ['\"]([^'\"]*)['\"]"
+mo = re.search(vsre, verstrline, re.M)
+if mo:
+    __version__ = mo.group(1)
+else:
+    raise RuntimeError('Unable to find version string in "{}/__init__.py".'.format(__pkg_name__))
 
-
-with open('README.md') as f:
+with open('README.md', encoding='utf-8') as f:
     README = f.read()
 
 setup(
@@ -14,34 +21,38 @@ setup(
     name=__pkg_name__,
     license="MIT",
     description='m6anet is a python package for detection of m6a modifications from Nanopore direct RNA sequencing data.',
-    version='v1.1.1',
+    version=__version__,
     long_description=README,
     url='https://github.com/GoekeLab/m6anet',
     packages=find_packages(),
-    package_data={'m6anet.model': ['model_states/prod_pooling_pr_auc.pt', 'configs/model_configs/prod_pooling.toml', 'norm_factors/norm_dict.joblib']},
-    python_requires=">=3.8",
+    package_data={'m6anet.model': ['model_states/human_hct116.pt', 'configs/model_configs/m6anet.toml', 'norm_factors/norm_factors_hct116.joblib']},
+    python_requires=">=3.7",
     install_requires=[
-            'numpy>=1.18.0',
-            'pandas>=0.25.3',
-            'scikit-learn>=0.24.1',
-            'scipy>=1.4.1',
+            'numpy==1.18.0',
+            'pandas==0.25.3',
+            'scikit-learn==0.24.1',
+            'scipy==1.4.1',
             'ujson',
             'torch==1.6.0',
-            'toml>=0.10.2',
+            'toml==0.10.2',
             'tqdm',
+            'typing-extensions'
             ],
-    entry_points={'console_scripts': ["m6anet-dataprep={}.scripts.dataprep:main".format(__pkg_name__),
-                                      "m6anet-run_inference={}.scripts.run_inference:main".format(__pkg_name__),
-                                      "m6anet-compute_norm_factors={}.scripts.compute_normalization_factors:main".format(__pkg_name__),
-                                      "m6anet-cross_validate={}.scripts.cross_validate:main".format(__pkg_name__),
-                                      "m6anet-train={}.scripts.train:main".format(__pkg_name__)]},
+    entry_points = {
+        'console_scripts': [
+            '{0} = {0}:main'.format(__pkg_name__),
+            "m6anet-dataprep={}.deprecated.dataprep:main".format(__pkg_name__),
+            "m6anet-run_inference={}.deprecated.inference:main".format(__pkg_name__),
+            "m6anet-compute_norm_factors={}.deprecated.compute_norm_factors:main".format(__pkg_name__),
+            "m6anet-train={}.deprecated.train:main".format(__pkg_name__)]
+        },
     classifiers=[
         # Trove classifiers
         # (https://pypi.python.org/pypi?%3Aaction=list_classifiers)
         'Development Status :: 1 - Planning',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.7',
         'Topic :: Software Development :: Libraries',
         'Topic :: Scientific/Engineering :: Bio-Informatics',
         'Intended Audience :: Science/Research',
