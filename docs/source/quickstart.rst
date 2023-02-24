@@ -45,6 +45,13 @@ m6anet inference will run default human model trained on the HCT116 cell line. I
         --n_processes 4 --num_iterations 1000
 
 m6Anet will sample 20 reads from each candidate site and average the probability of modification across several round of sampling according to the --num_iterations parameter.
+The output file `data.indiv_proba.csv` contains the probability of modification for each read
+
+* ``transcript_id``: The transcript id of the predicted position
+* ``transcript_position``: The transcript position of the predicted position
+* ``read_index``: The read identifier from nanopolish that corresponds to the actual read_id from nanopolish summary.txt
+* ``probability_modified``: The probability that a given read is modified
+
 The output file `data.site_proba.csv` contains the probability of modification at each individual position for each transcript. The output file will have 6 columns
 
 * ``transcript_id``: The transcript id of the predicted position
@@ -54,15 +61,10 @@ The output file `data.site_proba.csv` contains the probability of modification a
 * ``kmer``: The 5-mer motif of a given site
 * ``mod_ratio``: The estimated percentage of reads in a given site that is modified
 
-The output file `data.indiv_proba.csv` contains the probability of modification for each read
+The mod_ratio column is calculated by thresholding the ``probability_modified`` from `data.indiv_proba.csv` based on the ``--read_proba_threshold`` parameter during ``m6anet inference`` call,
+with a default value of 0.033379376. We also recommend a threshold of 0.9 to select m6A sites from the ``probability_modified`` column in ``data.site_proba.csv``.
+The total run time should not exceed 10 minutes on a normal laptop.
 
-* ``transcript_id``: The transcript id of the predicted position
-* ``transcript_position``: The transcript position of the predicted position
-* ``read_index``: The read identifier from nanopolish that corresponds to the actual read_id from nanopolish summary.txt
-* ``probability_modified``: The probability that a given read is modified
-
-The total run time should not exceed 10 minutes on a normal laptop. We also recommend a threshold of 0.9 for selecting m6A sites
-based on the ``probability_modified`` column, which can be relaxed at the expense of having lower model precision.
 
 m6Anet also supports pooling over multiple replicates. To do this, simply input multiple folders containing m6anet-dataprep outputs::
 

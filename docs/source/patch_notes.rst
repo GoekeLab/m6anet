@@ -49,8 +49,9 @@ m6Anet v-2.0.0                      576.4                  409.71               
 m6Anet v-2.0.0                      578.5                  408.17               1000
 =================================   =====================  ===================  =====================
 
-As we can see, the latest version of m6Anet has relatively constant peak memory usage with minimal difference in running time between 100 and 1000 iteration runs. This is done by saving each individual
-read probability in `data.indiv_proba.csv` file before sampling the required amount of reads for each site in parallel.
+As we can see, the latest version of m6Anet has relatively constant peak memory usage with minimal difference in running time between 100 and 1000 iteration runs. To achieve this, m6Anet
+saves each individual read probability file in `data.indiv_proba.csv` before sampling the required amount of reads for each site in parallel. The site level probability is then
+saved in `data.site_proba.csv`.
 
 
 Rounding of Dataprep Output
