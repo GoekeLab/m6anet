@@ -32,6 +32,7 @@ def test_parallel_parallel_preprocess_tx(dataprep_args, eventalign_index, data_i
     readcount_max = dataprep_args['readcount_max']
     min_segment_count = dataprep_args['min_segment_count']
     n_processes = dataprep_args['n_processes']
+    compress = dataprep_args['compress']
 
     shutil.copy(eventalign_index, out_dir)
 
@@ -39,7 +40,7 @@ def test_parallel_parallel_preprocess_tx(dataprep_args, eventalign_index, data_i
 
     parallel_preprocess_tx(eventalign_filepath, out_dir, n_processes,
                            readcount_min, readcount_max, n_neighbors,
-                           min_segment_count)
+                           min_segment_count, compress)
 
     test_data_info = os.path.join(out_dir, "data.info")
     test_data_json = os.path.join(out_dir, "data.json")
