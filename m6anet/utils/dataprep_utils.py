@@ -7,6 +7,7 @@ from io import StringIO
 from itertools import groupby
 from collections import defaultdict
 from operator import itemgetter
+from math import floor, log10
 import numpy as np
 import pandas as pd
 import ujson
@@ -325,7 +326,7 @@ def combine(events_str: str) -> np.recarray:
 
 
 def parallel_preprocess_tx(eventalign_filepath: str, out_dir:str, n_processes:int, readcount_min: int,
-                           readcount_max:int, n_neighbors:int, min_segment_count:int):
+                           readcount_max:int, n_neighbors:int, min_segment_count:int, compress:bool):
     r'''
     Function to aggregate segments from the same position within individual read and extract mean current level, dwelling time, and current standard deviation from each DRACH segment
     and its neighboring segments from each in eventalign.txt that passes certain count requirements as specified by the user for the purpose of m6anet inference or training
@@ -386,7 +387,7 @@ def parallel_preprocess_tx(eventalign_filepath: str, out_dir:str, n_processes:in
                 if readcount > readcount_max:
                     break
             if readcount>=readcount_min:
-                task_queue.put((tx_id,data_dict, n_neighbors, min_segment_count, out_paths))
+                task_queue.put((tx_id,data_dict, n_neighbors, min_segment_count, out_paths, compress))
 
     # Put the stop task into task_queue.
     task_queue = helper.end_queue(task_queue, n_processes)
@@ -395,7 +396,7 @@ def parallel_preprocess_tx(eventalign_filepath: str, out_dir:str, n_processes:in
     task_queue.join()
 
 
-def preprocess_tx(tx_id: str, data_dict: Dict, n_neighbors: int, min_segment_count: int, out_paths: Dict, locks: Dict):
+def preprocess_tx(tx_id: str, data_dict: Dict, n_neighbors: int, min_segment_count: int, out_paths: Dict, compress: bool, locks: Dict):
     r'''
     Function to extract features from eventalign.txt on a single transcript id
 
@@ -405,6 +406,7 @@ def preprocess_tx(tx_id: str, data_dict: Dict, n_neighbors: int, min_segment_cou
                     n_neighbors (int): The number of neighboring segments to be included in the feature extraction process
                     min_segment_count (int): Minimum required number of reads that cover a segment o be considered for feature extraction
                     out_paths (Dict): A dictionary containing filepath for all the output files produced by the index function
+                    compress (bool): A boolean variable indicating whether to compress the output data.json features
                     locks (Dict): A lock object from multiprocessing library that ensures only one process write to the output file at any given time
 
             Returns
@@ -454,6 +456,10 @@ def preprocess_tx(tx_id: str, data_dict: Dict, n_neighbors: int, min_segment_cou
     for position, features_array, reference_kmer_array, read_id in \
             zip(positions, features_arrays, reference_kmer_arrays, read_ids):
         kmer = set(reference_kmer_array)
+
+        if compress:
+                features_array = features_array.round(decimals=3)
+
         features_array = np.concatenate([features_array, read_id.reshape(-1, 1)], axis=1)
         assert(len(kmer) == 1)
         if (len(set(reference_kmer_array)) == 1) and ('XXXXX' in set(reference_kmer_array)) \
