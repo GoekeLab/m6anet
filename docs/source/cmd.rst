@@ -10,7 +10,7 @@ We provide 2 main scripts to run m6A prediction as the following.
 
 * Input
 
-Output files from ``nanopolish eventalign``
+Output files from ``nanopolish eventalign``. Please refer to :ref:`Quickstart page <quickstart>` for more details on running nanopolish.
 
 =================================   ==========  ===================  ============================================================================================================
 Argument name                       Required    Default value         Description
@@ -21,9 +21,10 @@ Argument name                       Required    Default value         Descriptio
 --chunk_size=NUM                    No          1000000               chunksize argument for pandas read csv function on the eventalign input
 --readcount_max=NUM                 No          1000                  Maximum read counts per gene.
 --readcount_min=NUM                 No          1                     Minimum read counts per gene.
---index                             No          True                  To skip indexing the eventalign nanopolish output, can only be used if the index has been created before
+--skip_index                        No          False                 To skip indexing the eventalign nanopolish output, can only be used if the index has been created before
 --n_neighbors=NUM                   No          1                     The number of flanking positions to process
 --min_segment_count=NUM             No          1                     Minimum read counts over each candidate m6A segment
+--compress                          No          False                 Round down output features to 3 decimal places
 =================================   ==========  ===================  ============================================================================================================
 
 * Output

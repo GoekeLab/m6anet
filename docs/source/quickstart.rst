@@ -1,19 +1,24 @@
 .. _quickstart:
 
+
+**************************
 Quick Start
-==================================
-m6Anet requires eventalign.txt from nanopolish::
+**************************
+
+Dataprep
+#######################################
+m6Anet dataprep requires eventalign.txt from ``nanopolish eventalign``::
 
     nanopolish eventalign --reads reads.fastq --bam reads.sorted.bam --genome transcript.fa --scale-events --signal-index --summary /path/to/summary.txt  --threads 50 > /path/to/eventalign.txt
 
-The nanopolish eventalign function segments raw fast5 signals to each position within the transcriptome, allowing m6Anet to predict modification based on the segmented signals. In order to run eventalign, users will need:
+This function segments raw fast5 signals to each position within the transcriptome, allowing m6Anet to predict modification based on the segmented signals. In order to run eventalign, users will need:
 * ``reads.fastq``: fastq file generated from basecalling the raw .fast5 files
 * ``reads.sorted.bam``: sorted bam file obtained from aligning reads.fastq to the reference transcriptome file
 * ``transcript.fa``: reference transcriptome file
 
-We have also provided a demo eventalign.txt dataset in the repository under /path/to/m6anet/m6anet/tests/data/eventalign.txt. Please see [Nanopolish](https://github.com/jts/nanopolish) for more information.
+We have also provided a demo eventalign.txt dataset in the repository under /path/to/m6anet/m6anet/tests/data/eventalign.txt. Please see `Nanopolish <https://github.com/jts/nanopolish>`_ for more information.
 
-Firstly, we need to preprocess the segmented raw signal file in the form of nanopolish eventalign file using 'm6anet dataprep'::
+After running nanopolish eventalign, we need to preprocess the segmented raw signal file using 'm6anet dataprep'::
 
     m6anet dataprep --eventalign /path/to/m6anet/m6anet/tests/data/eventalign.txt \
                     --out_dir /path/to/output --n_processes 4
@@ -25,11 +30,21 @@ The output files are stored in ``/path/to/output``:
 * ``data.info``: File containing indexing information of data.json for faster file access and the number of reads for each DRACH positions in eventalign.txt
 * ``eventalign.index``: Index file created during dataprep to allow faster access of Nanopolish eventalign.txt during dataprep
 
-Now we can run m6anet over our dataprep output using m6anet inference ::
+
+Inference
+#######################################
+
+Once ``m6anet dataprep`` finishes running, we can run ``m6anet inference`` on the dataprep output ::
 
     m6anet inference --input_dir path/to/output --out_dir path/to/output  --n_processes 4 --num_iterations 1000
 
-Here m6Anet will sample 20 reads from each candidate site and average the probability of modification across several round of sampling according to the --num_iterations parameter.
+m6anet inference will run default human model trained on the HCT116 cell line. In order to run Arabidopsis-based model, change the inputs to ``--model_state_dict``, ``--read_proba_threshold`` and ``norm_path`` to ::
+
+     m6anet inference --input_dir path/to/output --out_dir path/to/output  --read_proba_threshold 0.0032978046219796 \
+        --model_state_dict m6anet/m6anet/model/model_states/arabidopsis_virc.pt --norm_path m6anet/m6anet/model/norm_factors/norm_factors_virc.joblib\
+        --n_processes 4 --num_iterations 1000
+
+m6Anet will sample 20 reads from each candidate site and average the probability of modification across several round of sampling according to the --num_iterations parameter.
 The output file `data.site_proba.csv` contains the probability of modification at each individual position for each transcript. The output file will have 6 columns
 
 * ``transcript_id``: The transcript id of the predicted position
