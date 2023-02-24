@@ -10,7 +10,7 @@ We provide 2 main scripts to run m6A prediction as the following.
 
 * Input
 
-Output files from ``nanopolish eventalign``
+Output files from ``nanopolish eventalign``. Please refer to :ref:`Quickstart page <quickstart>` for more details on running nanopolish.
 
 =================================   ==========  ===================  ============================================================================================================
 Argument name                       Required    Default value         Description
@@ -21,23 +21,22 @@ Argument name                       Required    Default value         Descriptio
 --chunk_size=NUM                    No          1000000               chunksize argument for pandas read csv function on the eventalign input
 --readcount_max=NUM                 No          1000                  Maximum read counts per gene.
 --readcount_min=NUM                 No          1                     Minimum read counts per gene.
---index                             No          True                  To skip indexing the eventalign nanopolish output, can only be used if the index has been created before
+--skip_index                        No          False                 To skip indexing the eventalign nanopolish output, can only be used if the index has been created before
 --n_neighbors=NUM                   No          1                     The number of flanking positions to process
 --min_segment_count=NUM             No          1                     Minimum read counts over each candidate m6A segment
+--compress                          No          False                 Round down output features to 3 decimal places
 =================================   ==========  ===================  ============================================================================================================
-
 
 * Output
 
-======================  ==============  ===================================================================================================================================================================================================================
+======================  ==============  ===============================================================================================================================================================
 File name               File type       Description
-======================  ==============  ===================================================================================================================================================================================================================
+======================  ==============  ===============================================================================================================================================================
 eventalign.index        csv             File index indicating the position in the `eventalign.txt` file (the output of nanopolish eventalign) where the segmentation information of each read index is stored, allowing a random access.
 data.json               json            Intensity level mean for each position.
-data.info               csv             File summarizing number of expressed reads per segment and index indicating the position in the `data.json` file where the intensity level means across positions of each gene is stored, allowing a random access.
-data.log                csv             Summary of completed transcripts
-======================  ==============  ===================================================================================================================================================================================================================
-
+data.index              csv             File index indicating the position in the `data.json` file where the intensity level means across positions of each gene is stored, allowing a random access.
+data.readcount          csv             Summary of readcounts per gene.
+======================  ==============  ===============================================================================================================================================================
 
 ``m6anet inference``
 ************************
@@ -49,7 +48,7 @@ Output files from ``m6anet dataprep``.
 ==========================    ==========  ========================= ==============================================================================
 Argument name                 Required    Default value             Description
 ==========================    ==========  ========================= ==============================================================================
---input_dir=DIR               Yes         NA                        Input directory that contains data.json, data.info from m6anet-dataprep
+--input_dir=DIR               Yes         NA                        Input directory that contains data.json, data.index, and data.readcount from m6anet-dataprep
 --out_dir=DIR                 Yes         NA                        Output directory for the inference results from m6anet
 --model_config=FILE           No          prod_pooling.toml         Model architecture specifications. Please see examples in m6anet/model/configs/model_configs/prod_pooling.toml
 --model_state_dict=FILE       No          prod_pooling_pr_auc.pt    Model weights to be used for inference. Please see examples in m6anet/model/model_states/
