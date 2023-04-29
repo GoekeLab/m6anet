@@ -25,7 +25,7 @@ jobs:
         # Install pip and pytest
       - name: Install dependencies
         run: |
-          python setup.py install
+          pip install .
       - name: Install m6anet-package
         run: |
           python -m pip install --upgrade pip
