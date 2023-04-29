@@ -26,17 +26,19 @@ setup(
     url='https://github.com/GoekeLab/m6anet',
     packages=find_packages(),
     package_data={'m6anet.model': ['model_states/human_hct116.pt', 'configs/model_configs/m6anet.toml', 'norm_factors/norm_factors_hct116.joblib']},
-    python_requires=">=3.7",
+    python_requires=">=3.7, <3.9",
     install_requires=[
-            'numpy==1.18.0',
-            'pandas==0.25.3',
-            'scikit-learn==0.24.1',
-            'scipy==1.4.1',
-            'ujson',
-            'torch==1.6.0',
-            'toml==0.10.2',
-            'tqdm',
-            'typing-extensions'
+            "numpy>=1.18.0",
+            "pandas>=0.25.3",
+            "scikit-learn>=0.24.0, <1.1.0; python_version=='3.7'",
+            "scikit-learn>=0.24.0; python_version=='3.8'",
+            "scipy>=1.4.1, <1.8.0; python_version=='3.7'",
+            "scipy>=1.4.1; python_version=='3.8'",
+            "ujson",
+            "torch==1.6.0",
+            "toml>=0.10.2",
+            "tqdm",
+            "typing-extensions"
             ],
     entry_points = {
         'console_scripts': [
