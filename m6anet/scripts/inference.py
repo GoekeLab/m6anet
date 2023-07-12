@@ -78,7 +78,6 @@ def main(args):
             norm_path = 'm6anet/m6anet/model/norm_factors/norm_factors_virc.joblib'
         if pretrained_model == 'HEK293T_RNA004':
             model_state_dict = 'm6anet/m6anet/model/model_states/rna004_hek293t.pt'
-            norm_path = 'm6anet/m6anet/model/norm_factors/norm_factors_rna004_hek293t.joblib'
 
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed_all(args.seed)
