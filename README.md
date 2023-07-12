@@ -10,6 +10,12 @@ m6anet requires [Python version 3.7 or higher](https://www.python.org). To insta
 ```sh
 $ pip install m6anet
 ```
+
+Or, one can also install via conda with the following command:
+```sh
+$ conda install m6anet
+```
+
 See our documentation [here](https://m6anet.readthedocs.io/)!
 
 ### Getting help

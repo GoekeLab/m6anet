@@ -27,7 +27,9 @@ def argparser():
                         required=True)
 
     # Optional arguments
-
+    parser.add_argument("--pretrained_model",
+                        help="pre-trained model available at m6anet. Options include 'Hct116_RNA002', 'arabidopsis', 'HEK293T_RNA004'.",
+                        default='Hct116_RNA002', type=str)
     parser.add_argument("--model_config",
                         help='path to model config file.',
                         default=DEFAULT_MODEL_CONFIG)
@@ -66,12 +68,24 @@ def main(args):
     input_dir = args.input_dir
     out_dir = args.out_dir
 
+    model_state_dict = args.model_state_dict
+    norm_path = args.norm_path
+    pretrained_model = args.pretrained_model
+    if pretrained_model in ['Hct116_RNA002', 'arabidopsis', 'HEK293T_RNA004']:
+        if pretrained_model == 'arabidopsis':
+            read_proba_threshold = 0.0032978046219796
+            model_state_dict = 'm6anet/m6anet/model/model_states/arabidopsis_virc.pt'
+            norm_path = 'm6anet/m6anet/model/norm_factors/norm_factors_virc.joblib'
+        if pretrained_model == 'HEK293T_RNA004':
+            model_state_dict = 'm6anet/m6anet/model/model_states/rna004_hek293t.pt'
+            norm_path = 'm6anet/m6anet/model/norm_factors/norm_factors_rna004_hek293t.joblib'
+
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed_all(args.seed)
     np.random.seed(args.seed)
 
     model = MILModel(toml.load(args.model_config)).to(args.device)
-    model.load_state_dict(torch.load(args.model_state_dict,
+    model.load_state_dict(torch.load(model_state_dict,
                                      map_location=torch.device(args.device)))
 
     if not os.path.exists(out_dir):
@@ -83,9 +97,9 @@ def main(args):
         g.write('transcript_id,transcript_position,read_index,probability_modified\n')
 
     if len(input_dir) == 1:
-        ds = NanopolishDS(input_dir[0], DEFAULT_MIN_READS, args.norm_path, mode='Inference')
+        ds = NanopolishDS(input_dir[0], DEFAULT_MIN_READS, norm_path, mode='Inference')
     else:
-        ds = NanopolishReplicateDS(input_dir, DEFAULT_MIN_READS, args.norm_path, mode='Inference')
+        ds = NanopolishReplicateDS(input_dir, DEFAULT_MIN_READS, norm_path, mode='Inference')
 
     dl = DataLoader(ds, num_workers=args.n_processes, collate_fn=inference_collate, batch_size=args.batch_size,
                     shuffle=False)
