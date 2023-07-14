@@ -12,6 +12,9 @@ DEFAULT_NORM_PATH = pkg_resources.resource_filename('m6anet.model', 'norm_factor
 DEFAULT_MIN_READS = 20
 DEFAULT_READ_THRESHOLD = 0.033379376
 
+ARABIDOPSIS_MODEL_WEIGHTS = pkg_resources.resource_filename('m6anet.model', 'model_states/arabidopsis_virc.pt')
+ARABIDOPSIS_NORM_PATH = pkg_resources.resource_filename('m6anet.model', 'norm_factors/norm_factors_virc.joblib')
+HEK293TRNA004_MODEL_WEIGHTS = pkg_resources.resource_filename('m6anet.model', 'model_states/rna004_hek293t.pt')
 
 NUM_NEIGHBORING_FEATURES = 1
 CENTER_MOTIFS = [['A', 'G', 'T'], ['G', 'A'], ['A'], ['C'], ['A', 'C', 'T']]

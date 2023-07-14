@@ -7,7 +7,8 @@ from argparse import ArgumentParser
 from argparse import ArgumentDefaultsHelpFormatter
 from ..model.model import MILModel
 from ..utils.constants import DEFAULT_MODEL_CONFIG, DEFAULT_MODEL_WEIGHTS,\
-    DEFAULT_NORM_PATH, DEFAULT_MIN_READS, DEFAULT_READ_THRESHOLD
+    DEFAULT_NORM_PATH, DEFAULT_MIN_READS, DEFAULT_READ_THRESHOLD,\
+    ARABIDOPSIS_MODEL_WEIGHTS, ARABIDOPSIS_NORM_PATH, HEK293TRNA004_MODEL_WEIGHTS
 from ..utils.data_utils import NanopolishDS, NanopolishReplicateDS, inference_collate
 from ..utils.inference_utils import run_inference
 from torch.utils.data import DataLoader
@@ -74,10 +75,10 @@ def main(args):
     if pretrained_model in ['Hct116_RNA002', 'arabidopsis', 'HEK293T_RNA004']:
         if pretrained_model == 'arabidopsis':
             read_proba_threshold = 0.0032978046219796
-            model_state_dict = 'm6anet/m6anet/model/model_states/arabidopsis_virc.pt'
-            norm_path = 'm6anet/m6anet/model/norm_factors/norm_factors_virc.joblib'
+            model_state_dict = ARABIDOPSIS_MODEL_WEIGHTS
+            norm_path = ARABIDOPSIS_NORM_PATH
         if pretrained_model == 'HEK293T_RNA004':
-            model_state_dict = 'm6anet/m6anet/model/model_states/rna004_hek293t.pt'
+            model_state_dict = HEK293TRNA004_MODEL_WEIGHTS
 
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed_all(args.seed)

@@ -25,7 +25,7 @@ setup(
     long_description=README,
     url='https://github.com/GoekeLab/m6anet',
     packages=find_packages(),
-    package_data={'m6anet.model': ['model_states/human_hct116.pt', 'configs/model_configs/m6anet.toml', 'norm_factors/norm_factors_hct116.joblib']},
+    package_data={'m6anet.model': ['model_states/human_hct116.pt', 'model_states/arabidopsis_virc.pt', 'model_states/rna004_hek293t.pt', 'configs/model_configs/m6anet.toml', 'norm_factors/norm_factors_hct116.joblib', 'norm_factors/norm_factors_virc.joblib']},
     python_requires=">=3.7, <3.9",
     install_requires=[
             "numpy>=1.18.0",
