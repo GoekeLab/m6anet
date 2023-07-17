@@ -41,26 +41,20 @@ We trained m6anet using an RNA004 direct RNA-Seq run of the HEK293T cell line, w
 
 Please note that the RNA004 will generate higher read numbers, which leads to a higher number of sites being tested.
 
-HEK293T Hct116
++------------------------------------------------+----------------------------------------------+
+| HEK293T                                        | Hct116                                       |
++=======================+========================+==============================================+
+| .. image:: _images/RNA004_mapq20_HEK293T.jpg   | .. image:: _images/RNA004_mapq20_Hct116.jpg  |
++-----------------------+------------------------+----------------------------------------------+
 
-.. figure:: 
-   :align: center
-   :alt: 
-
-.. figure:: 
-   :align: center
-   :alt: 
 Figure 1: ROC curve comparing the m6Anet model trained on RNA002 and evaluated on RNA002 data with the model trained on RNA004 and evaluated on RNA004. Only sites that were detected in both data sets are used in this comparison. Here, a MAPQ filter of 20 was applied.
 
-HEK293T Hct116
++------------------------------------------------+----------------------------------------------+
+| HEK293T                                        | Hct116                                       |
++=======================+========================+==============================================+
+| .. image:: _images/RNA004_mapq0_HEK293T.jpg    | .. image:: _images/RNA004_mapq0_Hct116.jpg   |
++-----------------------+------------------------+----------------------------------------------+
 
-.. figure:: 
-   :align: center
-   :alt: 
-
-.. figure:: 
-   :align: center
-   :alt: 
 Figure 2: ROC curve comparing the m6Anet model trained on RNA002 and evaluated on RNA002 data with the model trained on RNA004 and evaluated on RNA004. Only sites that were detected in both data sets are used in this comparison. Here, a MAPQ filter of 0 was applied to the RNA004 data, leading to a higher number of sites which are detected.
 
 The latest RNA004-trained m6anet model is available on https://github.com/goekeLab/m6anet.
