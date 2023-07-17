@@ -72,6 +72,7 @@ def main(args):
     model_state_dict = args.model_state_dict
     norm_path = args.norm_path
     pretrained_model = args.pretrained_model
+    read_proba_threshold = args.read_proba_threshold
     if pretrained_model in ['Hct116_RNA002', 'arabidopsis', 'HEK293T_RNA004']:
         if pretrained_model == 'arabidopsis':
             read_proba_threshold = 0.0032978046219796
