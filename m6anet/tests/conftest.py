@@ -74,6 +74,7 @@ def inference_args(data_info, tmp_path):
         device = 'cpu'
         seed = 0
         read_proba_threshold = DEFAULT_READ_THRESHOLD
+        pretrained_model = 'Hct116_RNA002'
 
     return InferenceArgs
 

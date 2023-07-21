@@ -49,6 +49,7 @@ Argument name                 Required    Default value             Description
 ==========================    ==========  ========================= ==============================================================================
 --input_dir=DIR               Yes         NA                        Input directory that contains data.json, data.index, and data.readcount from m6anet-dataprep
 --out_dir=DIR                 Yes         NA                        Output directory for the inference results from m6anet
+--pretrained_model=STR        No          Hct116_RNA002             Name of the pre-trained model: Hct116_RNA002, arabidopsis, and HEK293T_RNA004
 --model_config=FILE           No          prod_pooling.toml         Model architecture specifications. Please see examples in m6anet/model/configs/model_configs/prod_pooling.toml
 --model_state_dict=FILE       No          prod_pooling_pr_auc.pt    Model weights to be used for inference. Please see examples in m6anet/model/model_states/
 --batch_size=NUM              No          64                        Number of sites to be loaded each time for inference
