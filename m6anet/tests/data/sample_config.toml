@@ -1,0 +1,21 @@
+[loss_function]
+loss_function_type = "binary_cross_entropy_loss"
+
+[dataset]
+root_dir = "/home/christopherhendra/m6anet/m6anet/tests/data/"
+min_reads = 20
+norm_path = "/home/christopherhendra/m6anet/m6anet/model/norm_factors/norm_factors_hct116.joblib"
+num_neighboring_features = 1
+
+[dataloader]
+    [dataloader.train]
+    batch_size = 256
+    sampler = "ImbalanceOverSampler"
+
+    [dataloader.val]
+    batch_size = 256
+    shuffle = false
+
+    [dataloader.test]
+    batch_size = 256
+    shuffle = false
