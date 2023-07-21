@@ -41,7 +41,7 @@ Once ``m6anet dataprep`` finishes running, we can run ``m6anet inference`` on th
 m6anet inference will run default human model trained on the HCT116 cell line. In order to run Arabidopsis-based model or the HEK293T-RNA004-based models, please supply the ``--pretrained_model`` argument ::
 
        ## For the Arabidopsis-based model
-       m6anet inference --input_dir path/to/output --out_dir path/to/output  --pretrained_model arabidopsis --n_processes 4 --num_iterations 1000
+       m6anet inference --input_dir path/to/output --out_dir path/to/output  --pretrained_model arabidopsis_RNA002 --n_processes 4 --num_iterations 1000
 
        ## For the HEK293T-RNA004-based model
        m6anet inference --input_dir path/to/output --out_dir path/to/output  --pretrained_model HEK293T_RNA004 --n_processes 4 --num_iterations 1000
@@ -64,7 +64,7 @@ The output file `data.site_proba.csv` contains the probability of modification a
 * ``mod_ratio``: The estimated percentage of reads in a given site that is modified
 
 The mod_ratio column is calculated by thresholding the ``probability_modified`` from `data.indiv_proba.csv` based on the ``--read_proba_threshold`` parameter during ``m6anet inference`` call,
-with a default value of 0.033379376. We also recommend a threshold of 0.9 to select m6A sites from the ``probability_modified`` column in ``data.site_proba.csv``.
+with a default value of 0.033379376 for the default human model HCT116_RNA002 and 0.0032978046219796 for arabidopsis_RNA002 model. We also recommend a threshold of 0.9 to select m6A sites from the ``probability_modified`` column in ``data.site_proba.csv``.
 The total run time should not exceed 10 minutes on a normal laptop.
 
 
