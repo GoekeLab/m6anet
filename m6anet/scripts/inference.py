@@ -75,7 +75,7 @@ def main(args):
         warnings.warn("--model_state_dict is specified, overwriting default model weights")
     else:
         if args.pretrained_model not in DEFAULT_PRETRAINED_MODELS:
-            raise ValueError("Invalid pretrained model, must be one of {}".format(DEFAULT_PRETRAINED_MODELS))
+            raise ValueError("Invalid pretrained model {}, must be one of {}".format(args.pretrained_model, DEFAULT_PRETRAINED_MODELS))
 
         args.model_state_dict = PRETRAINED_CONFIGS[args.pretrained_model][0]
         args.read_proba_threshold = PRETRAINED_CONFIGS[args.pretrained_model][1]
