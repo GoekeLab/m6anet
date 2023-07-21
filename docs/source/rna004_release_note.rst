@@ -32,7 +32,7 @@ In order to identify m6A from RNA004 data, the RNA004 model has to be specified 
 
     m6anet inference --input_dir [INPUT_DIR] --out_dir [OUT_DIR] --pretrained_model HEK293T_RNA004
 
-The RNA004 model is trained on the development version and only underwent limited evaluation compared to the RNA002 model. Please report any feedback to us (https://github.com/GoekeLab/m6anet/discussions)
+The RNA004 model is trained on the development version and only underwent limited evaluation on site-level prediction compared to the RNA002 model. The individual read probability accuracy for RNA004 has not been tested. Please report any feedback to us (https://github.com/GoekeLab/m6anet/discussions)
 
 Training and evaluating the RNA004 m6anet
 ##########################################
