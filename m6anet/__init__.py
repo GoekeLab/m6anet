@@ -5,7 +5,7 @@ from m6anet.scripts import dataprep, inference, train, \
 
 modules = ['dataprep', 'inference', 'train', 'compute_norm_factors', 'convert']
 
-__version__ = "2.0.3"
+__version__ = "2.1.0"
 
 
 def main():
