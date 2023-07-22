@@ -1,4 +1,4 @@
-.. rna004_release_note:
+.. _rna004_release_note:
 
 **************************
 Release Note 2.1.0
@@ -8,7 +8,7 @@ Release Note 2.1.0
 #######################################
 
 The default m6Anet model was trained with the currently available RNA002 direct RNA-Seq kit. Oxford Nanopore is currently providing access to the development version of the next version, RNA004. To make m6A detection possible with RNA004, we now provide an m6Anet model trained on direct RNA
-Seq data from the Hek293T cell line using the development version of RNA004. In order to call m6A on data from the RNA004 kit, the following commands can be used:
+Seq data from the HEK293T cell line using the development version of RNA004. In order to call m6A on data from the RNA004 kit, the following commands can be used:
 
 1) Pre-processing/segmentation/dataprep
 Please use f5c with the RNA004 kmer model, as described here:
@@ -42,7 +42,7 @@ We trained m6anet using an RNA004 direct RNA-Seq run of the HEK293T cell line, w
 Please note that the RNA004 will generate higher read numbers, which leads to a higher number of sites being tested.
 
 +------------------------------------------------+----------------------------------------------+
-| HEK293T                                        | Hct116                                       |
+| HEK293T                                        | HCT116                                       |
 +=======================+========================+==============================================+
 | .. image:: _images/RNA004_mapq20_HEK293T.jpg   | .. image:: _images/RNA004_mapq20_Hct116.jpg  |
 +-----------------------+------------------------+----------------------------------------------+
@@ -50,7 +50,7 @@ Please note that the RNA004 will generate higher read numbers, which leads to a 
 Figure 1: ROC curve comparing the m6Anet model trained on RNA002 and evaluated on RNA002 data with the model trained on RNA004 and evaluated on RNA004. Only sites that were detected in both data sets are used in this comparison. Here, a MAPQ filter of 20 was applied.
 
 +------------------------------------------------+----------------------------------------------+
-| HEK293T                                        | Hct116                                       |
+| HEK293T                                        | HCT116                                       |
 +=======================+========================+==============================================+
 | .. image:: _images/RNA004_mapq0_HEK293T.jpg    | .. image:: _images/RNA004_mapq0_Hct116.jpg   |
 +-----------------------+------------------------+----------------------------------------------+
