@@ -22,7 +22,7 @@ def test_parallel_index(dataprep_args, tmp_path, eventalign_index):
 
     assert((index_df == index_test).all().all())
 
-@pytest.mark.depends(on=['test_parallel_index'])
+@pytest.mark.dependency(depends=['test_parallel_index'])
 def test_parallel_parallel_preprocess_tx(dataprep_args, eventalign_index, data_info, data_json, dataprep_helpers):
     eventalign_filepath = dataprep_args['eventalign']
     out_dir = dataprep_args['out_dir']

@@ -11,10 +11,16 @@ PyPI installation (recommended)
 
     pip install m6anet
 
+Conda installation
+---------------------------------------
+::
+
+    conda install -c bioconda m6anet
+
 Installation from our GitHub repository
 ---------------------------------------
 ::
 
     git clone https://github.com/GoekeLab/m6anet.git
     cd m6anet
-    python setup.py install
+    pip install .

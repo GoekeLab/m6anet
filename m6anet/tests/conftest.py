@@ -4,7 +4,7 @@ import json
 import shutil
 import numpy as np
 from m6anet.utils.constants import NUM_NEIGHBORING_FEATURES, DEFAULT_MODEL_CONFIG, \
-    DEFAULT_MODEL_WEIGHTS, DEFAULT_NORM_PATH, DEFAULT_READ_THRESHOLD
+    DEFAULT_MODEL_WEIGHTS, DEFAULT_NORM_PATH, DEFAULT_READ_THRESHOLD, DEFAULT_PRETRAINED_MODEL
 
 
 @pytest.fixture(scope="session")
@@ -64,7 +64,8 @@ def inference_args(data_info, tmp_path):
         input_dir = [os.path.dirname(data_info)]
         out_dir = tmp_path
         model_config = DEFAULT_MODEL_CONFIG
-        model_state_dict = DEFAULT_MODEL_WEIGHTS
+        model_state_dict = None
+        pretrained_model = DEFAULT_PRETRAINED_MODEL
         norm_path = DEFAULT_NORM_PATH
         batch_size = 16
         save_per_batch = 2
