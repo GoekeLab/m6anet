@@ -20,14 +20,14 @@ Newer pore version might alter the raw squiggle and affect segmentation and clas
 Contents
 --------------------------
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    installation
    quickstart
    cmd
    training
    help
-   patch_notes
+   release_notes
    citing
 
 Citing m6Anet
