@@ -3,7 +3,7 @@
 
 m6anet is a python tool that leverages Multiple Instance Learning framework to detect m6a modifications from Nanopore Direct RNA Sequencing data
 
-### Table of Contents
+# Table of Contents
 - **[Running m6Anet](#running-m6anet)**<br>
     - **[Installation](#installation)**<br>
     - **[Dataprep](#dataprep)**<br>
@@ -299,4 +299,3 @@ This package is developed and maintaned by [Christopher Hendra](https://github.c
 
 # License
 m6Anet is licensed under the terms of the MIT license.
-
