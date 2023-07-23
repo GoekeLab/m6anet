@@ -2,12 +2,16 @@ import os
 import torch
 import toml
 import pkg_resources
+import pathlib
 import numpy as np
+import warnings
 from argparse import ArgumentParser
 from argparse import ArgumentDefaultsHelpFormatter
 from ..model.model import MILModel
-from ..utils.constants import DEFAULT_MODEL_CONFIG, DEFAULT_MODEL_WEIGHTS,\
-    DEFAULT_NORM_PATH, DEFAULT_MIN_READS, DEFAULT_READ_THRESHOLD
+from ..utils.constants import DEFAULT_MODEL_CONFIG,\
+    DEFAULT_MIN_READS, DEFAULT_READ_THRESHOLD,\
+    DEFAULT_NORM_PATH, PRETRAINED_CONFIGS,\
+    DEFAULT_PRETRAINED_MODEL, DEFAULT_PRETRAINED_MODELS
 from ..utils.data_utils import NanopolishDS, NanopolishReplicateDS, inference_collate
 from ..utils.inference_utils import run_inference
 from torch.utils.data import DataLoader
@@ -27,13 +31,15 @@ def argparser():
                         required=True)
 
     # Optional arguments
-
+    parser.add_argument("--pretrained_model",
+                        help="pre-trained model available at m6anet. Options include {}.".format(DEFAULT_PRETRAINED_MODELS),
+                        default=DEFAULT_PRETRAINED_MODEL, type=str)
     parser.add_argument("--model_config",
                         help='path to model config file.',
                         default=DEFAULT_MODEL_CONFIG)
     parser.add_argument("--model_state_dict",
                         help='path to model weights.',
-                        default=DEFAULT_MODEL_WEIGHTS)
+                        default=None)
     parser.add_argument("--norm_path",
                         help='path to normalization factors file',
                         default=DEFAULT_NORM_PATH)
@@ -56,7 +62,7 @@ def argparser():
                         help='random seed for sampling.',
                         default=0, type=int)
     parser.add_argument("--read_proba_threshold",
-                        help='default probability threshold for a read to be considered modified',
+                        help='default probability threshold for a read to be considered modified.',
                         default=DEFAULT_READ_THRESHOLD, type=float)
     return parser
 
@@ -64,7 +70,16 @@ def argparser():
 def main(args):
 
     input_dir = args.input_dir
-    out_dir = args.out_dir
+
+    if args.model_state_dict is not None:
+        warnings.warn("--model_state_dict is specified, overwriting default model weights")
+    else:
+        if args.pretrained_model not in DEFAULT_PRETRAINED_MODELS:
+            raise ValueError("Invalid pretrained model {}, must be one of {}".format(args.pretrained_model, DEFAULT_PRETRAINED_MODELS))
+
+        args.model_state_dict = PRETRAINED_CONFIGS[args.pretrained_model][0]
+        args.read_proba_threshold = PRETRAINED_CONFIGS[args.pretrained_model][1]
+        args.norm_path = PRETRAINED_CONFIGS[args.pretrained_model][2]
 
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed_all(args.seed)
@@ -74,8 +89,7 @@ def main(args):
     model.load_state_dict(torch.load(args.model_state_dict,
                                      map_location=torch.device(args.device)))
 
-    if not os.path.exists(out_dir):
-        os.makedirs(out_dir)
+    pathlib.Path(args.out_dir).mkdir(parents=True, exist_ok=True)
 
     with open(os.path.join(args.out_dir, "data.site_proba.csv"),'w', encoding='utf-8') as f:
         f.write('transcript_id,transcript_position,n_reads,probability_modified,kmer,mod_ratio\n')

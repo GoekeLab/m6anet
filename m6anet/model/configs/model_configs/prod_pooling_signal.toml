@@ -1,0 +1,27 @@
+model = "prod_sigmoid_pooling"
+
+[[block]]
+block_type = "DeaggregateNanopolish"
+num_neighboring_features = 1
+
+[[block]]
+block_type = "ExtractSignal"
+
+[[block]]
+block_type = "Linear"
+input_channel = 9
+output_channel = 150
+activation = "relu"
+batch_norm = true
+
+[[block]]
+block_type = "Linear"
+input_channel = 150
+output_channel = 32
+activation = "relu"
+batch_norm = false
+
+[[block]]
+block_type = "SigmoidProdPooling"
+input_channel = 32
+n_reads_per_site = 20
