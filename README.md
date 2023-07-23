@@ -67,7 +67,7 @@ Once `m6anet dataprep` finishes running, we can run `m6anet inference` on the da
     m6anet inference --input_dir path/to/output --out_dir path/to/output  --n_processes 4 --num_iterations 1000
 ```
 
-m6anet inference will run default human model trained on the HCT116 cell line. In order to run Arabidopsis-based model or the HEK293T-RNA004-based models, please supply the `--pretrained_model` argument:
+m6anet inference will run default human model trained on the HCT116 cell line. In order to run Arabidopsis-based model or the HEK293T-RNA004-based model, please supply the `--pretrained_model` argument:
 ```
     ## For the Arabidopsis-based model
 
