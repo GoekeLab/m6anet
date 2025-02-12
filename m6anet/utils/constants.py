@@ -18,11 +18,13 @@ ARABIDOPSIS_MODEL_WEIGHTS = pkg_resources.resource_filename('m6anet.model', 'mod
 ARABIDOPSIS_NORM_PATH = pkg_resources.resource_filename('m6anet.model', 'norm_factors/rna002_arabidopsis_virc.joblib')
 ARABIDOPSIS_READ_THRESHOLD = 0.0032978046219796
 
-HEK293TRNA004_MODEL_WEIGHTS = pkg_resources.resource_filename('m6anet.model', 'model_states/rna004_hek293t.pt')
+HEK293TRNA004_GLORI_MODEL_WEIGHTS = pkg_resources.resource_filename('m6anet.model', 'model_states/rna004_hek293t_glori.pt')
+HEK293TRNA004_M6ACE_MODEL_WEIGHTS = pkg_resources.resource_filename('m6anet.model', 'model_states/rna004_hek293t_m6ace.pt')
 
 PRETRAINED_CONFIGS = {'HCT116_RNA002': (DEFAULT_MODEL_WEIGHTS, DEFAULT_READ_THRESHOLD, DEFAULT_NORM_PATH),
                       'arabidopsis_RNA002': (ARABIDOPSIS_MODEL_WEIGHTS, ARABIDOPSIS_READ_THRESHOLD, ARABIDOPSIS_NORM_PATH),
-                      'HEK293T_RNA004': (HEK293TRNA004_MODEL_WEIGHTS, DEFAULT_READ_THRESHOLD, ARABIDOPSIS_NORM_PATH)}
+                      'HEK293T_RNA004': (HEK293TRNA004_GLORI_MODEL_WEIGHTS, DEFAULT_READ_THRESHOLD, DEFAULT_NORM_PATH),
+                      'HEK293T_RNA004_M6ACE': (HEK293TRNA004_M6ACE_MODEL_WEIGHTS, DEFAULT_READ_THRESHOLD, DEFAULT_NORM_PATH)}
 
 NUM_NEIGHBORING_FEATURES = 1
 CENTER_MOTIFS = [['A', 'G', 'T'], ['G', 'A'], ['A'], ['C'], ['A', 'C', 'T']]
