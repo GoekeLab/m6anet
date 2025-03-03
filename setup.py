@@ -37,7 +37,7 @@ setup(
             "scipy>=1.4.1, <1.8.0; python_version=='3.7'",
             "scipy>=1.4.1; python_version=='3.8'",
             "ujson",
-            "torch==1.6.0",
+            "torch==2.2.1",
             "toml>=0.10.2",
             "tqdm",
             "typing-extensions"

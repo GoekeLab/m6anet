@@ -1,9 +1,9 @@
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
-from m6anet.scripts import dataprep, inference, train, \
+from m6anet.scripts import dataprep, inference, inference_no_dataprep, train, \
         compute_norm_factors, convert
 
 
-modules = ['dataprep', 'inference', 'train', 'compute_norm_factors', 'convert']
+modules = ['dataprep', 'inference', 'inference_no_dataprep', 'train', 'compute_norm_factors', 'convert']
 
 __version__ = "2.1.0"
 
