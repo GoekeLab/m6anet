@@ -44,7 +44,7 @@ def run_inference(model: MILModel, dl: DataLoader, args: ArgumentParser):
                     tx_positions.append(tx_position)
                     read_ids.append(read_id)
 
-                    if (it + 1) % args.save_per_batch:
+                    if True: #(it + 1) % args.save_per_batch:
                         read_probs, tx_ids, tx_positions, read_ids, all_kmers, n_reads = \
                             group_results(np.concatenate(read_probs), np.concatenate(tx_ids),
                                           np.concatenate(tx_positions), np.concatenate(read_ids),
