@@ -27,7 +27,7 @@ setup(
     url='https://github.com/GoekeLab/m6anet',
     packages=find_packages(),
     package_data={'m6anet.model': ['model_states/rna002_hct116.pt', 'model_states/rna002_arabidopsis_virc.pt',
-                                   'model_states/rna004_hek293t_m6ace.pt', 'model_states/rna004_hek293t_glori.pt',
+                                   'model_states/rna004_hek293t_m6ace.pt',
                                    'configs/model_configs/m6anet.toml',
                                    'norm_factors/rna002_hct116.joblib', 'norm_factors/rna002_arabidopsis_virc.joblib']},
     python_requires=">=3.7, <3.9",
